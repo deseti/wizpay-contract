@@ -1,0 +1,6 @@
+ERR: null
+STDOUT:
+[dotenv@17.2.3] injecting env (18) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+Compiled 1 Solidity file successfully (evm target: paris).
+
+STDERR:

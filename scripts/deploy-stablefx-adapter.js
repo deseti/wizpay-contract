@@ -26,14 +26,24 @@ async function main() {
     console.log("   USYC:", USYC);
     console.log();
 
-    // Deploy StableFXAdapter
-    console.log("📦 Deploying StableFXAdapter...");
+    // Deploy StableFXAdapter (with USDC as baseAsset proxy for USD valuation)
+    console.log("📦 Deploying Decentralized StableFXAdapter LP Vault...");
     const StableFXAdapter = await hre.ethers.getContractFactory("StableFXAdapter");
-    const adapter = await StableFXAdapter.deploy(deployer.address);
+    const adapter = await StableFXAdapter.deploy(deployer.address, USDC);
     await adapter.waitForDeployment();
     
     const adapterAddress = await adapter.getAddress();
-    console.log("✅ StableFXAdapter deployed to:", adapterAddress);
+    console.log("✅ StableFXAdapter Vault deployed to:", adapterAddress);
+    console.log();
+
+    console.log("🛡️ Configuring Accepted LP Tokens...");
+    let txConfig = await adapter.addAcceptedToken(USDC);
+    await txConfig.wait();
+    console.log("   - Added USDC to Pool");
+    
+    txConfig = await adapter.addAcceptedToken(EURC);
+    await txConfig.wait();
+    console.log("   - Added EURC to Pool");
     console.log();
 
     // Configure real-time market rates (approximate current market rates)

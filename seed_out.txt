@@ -1,0 +1,25 @@
+ERR: null
+STDOUT:
+[dotenv@17.2.3] injecting env (18) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+🌊 Seeding StableFXAdapter with 50% of Wallet Balance...
+
+📝 Account: 0x32F251fc36A1174901124589EAC2d4E391816F69
+USDC Balance: 84.736841 -> Seeding: 42.36842
+EURC Balance: 77.5045 -> Seeding: 38.75225
+
+0. Refreshing Exchange Rates (Oracle)...
+✅ Exchange rates refreshed.
+
+1. Approving USDC...
+2. Adding USDC Liquidity...
+✅ USDC liquidity added!
+
+1. Approving EURC...
+2. Adding EURC Liquidity...
+✅ EURC liquidity added!
+
+🎉 Seeding Complete! View in the Dashboard now!
+
+STDERR:

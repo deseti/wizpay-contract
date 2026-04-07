@@ -2,45 +2,38 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./IFXEngine.sol";
 
 /**
- * @title StableFXAdapter
- * @dev Adapter contract that bridges PayerX with Circle's StableFX on ARC
- * 
- * StableFX uses an RFQ (Request-for-Quote) model with offchain API execution,
- * but this adapter provides a simplified swap interface for PayerX integration.
+ * @title StableFXAdapter (SFX-LP)
+ * @dev Decentralized Adapter contract bridging PayerX with cross-stablecoin liquidity
  * 
  * Features:
- * - Real-time market rates from StableFX
- * - Fallback to oracle-based rates for instant quotes
- * - Compatible with PayerX's IFXEngine interface
- * - Support for USDC, EURC, USYC pairs
- * 
- * Note: For production with full StableFX integration, consider using the
- * StableFX API for RFQ execution and this adapter for settlement only.
+ * - Unified Liquidity Pool (ERC20 Token Vault model)
+ * - Users earn fees by providing liquidity in exchange for SFX-LP tokens
+ * - Automated 0.25% internal swap fee distributed to LP stakers
+ * - Dynamic TVL pricing oracle
  */
-contract StableFXAdapter is IFXEngine, Ownable {
-    // Permit2 contract for StableFX integration
-    address public constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
-    
-    // StableFX FxEscrow contract
-    address public constant FX_ESCROW = 0x1f91886C7028986aD885ffCee0e40b75C9cd5aC1;
-    
+contract StableFXAdapter is IFXEngine, ERC20, Ownable {
     // Exchange rate oracle (18 decimals: 1e18 = 1:1 rate)
     mapping(address => mapping(address => uint256)) public exchangeRates;
     
-    // Rate validity period (to ensure fresh rates)
+    // Rate validity period
     mapping(address => mapping(address => uint256)) public rateTimestamps;
-    uint256 public constant RATE_VALIDITY = 300; // 5 minutes
+    uint256 public constant RATE_VALIDITY = 86400; // 24 hours (testnet-friendly)
     
-    // Slippage tolerance (in basis points: 100 = 1%)
+    // Slippage tracking
     uint256 public slippageTolerance = 50; // 0.5%
     uint256 public constant MAX_SLIPPAGE = 500; // 5%
+
+    // Liquidity Pool Mechanics
+    uint256 public lpFeeBps = 25; // 0.25% fee distributed to LP pool
+    address public baseAsset; // Base token used to calculate total TVL (e.g. USDC)
     
-    // Liquidity pool for instant swaps (alternative to RFQ when needed)
-    mapping(address => uint256) public liquidity;
+    address[] public acceptedTokens;
+    mapping(address => bool) public isAcceptedToken;
     
     // Events
     event ExchangeRateUpdated(
@@ -55,23 +48,114 @@ contract StableFXAdapter is IFXEngine, Ownable {
         address indexed tokenOut,
         uint256 amountIn,
         uint256 amountOut,
-        uint256 rate
+        uint256 rate,
+        uint256 lpFee
     );
     
-    event LiquidityAdded(address indexed token, uint256 amount);
-    event LiquidityRemoved(address indexed token, uint256 amount);
-    event SlippageToleranceUpdated(uint256 oldTolerance, uint256 newTolerance);
+    event LiquidityAdded(address indexed token, uint256 amountIn, uint256 sharesMinted);
+    event LiquidityRemoved(address indexed token, uint256 amountOut, uint256 sharesBurned);
+    event AcceptedTokenAdded(address indexed token);
+    
+    constructor(address initialOwner, address _baseAsset) 
+        ERC20("StableFX Liquidity Provider", "SFX-LP") 
+        Ownable(initialOwner) 
+    {
+        require(_baseAsset != address(0), "StableFXAdapter: Invalid base asset");
+        baseAsset = _baseAsset;
+    }
 
-    constructor(address initialOwner) Ownable(initialOwner) {}
+    /**
+     * @dev SFX-LP decimals matches the base stablecoin (6 decimals)
+     */
+    function decimals() public pure override returns (uint8) {
+        return 6;
+    }
+
+    /**
+     * @dev Add supported token to the LP Pool
+     */
+    function addAcceptedToken(address token) external onlyOwner {
+        require(!isAcceptedToken[token], "StableFXAdapter: Token already tracked");
+        isAcceptedToken[token] = true;
+        acceptedTokens.push(token);
+        emit AcceptedTokenAdded(token);
+    }
+
+    /**
+     * @dev Calculates the Total Value Locked (TVL) across all accepted tokens
+     * Normalized to the `baseAsset` scale using Oracle Exchange Rates
+     */
+    function getTVL() public view returns (uint256 totalValue) {
+        for (uint256 i = 0; i < acceptedTokens.length; i++) {
+            address token = acceptedTokens[i];
+            uint256 balance = IERC20(token).balanceOf(address(this));
+            
+            if (balance > 0) {
+                totalValue += getEstimatedAmountInternal(token, baseAsset, balance);
+            }
+        }
+        return totalValue;
+    }
+
+    /**
+     * @dev Provides Liquidity: User sends token, receives SFX-LP shares proportional to pool TVL
+     */
+    function addLiquidity(address token, uint256 amount) external {
+        require(isAcceptedToken[token], "StableFXAdapter: Token not accepted in pool");
+        require(amount > 0, "StableFXAdapter: Invalid amount");
+        
+        uint256 tvlBefore = getTVL();
+        
+        require(
+            IERC20(token).transferFrom(msg.sender, address(this), amount),
+            "StableFXAdapter: Transfer failed"
+        );
+        
+        uint256 valueAdded = getEstimatedAmountInternal(token, baseAsset, amount);
+        uint256 sharesToMint = 0;
+        
+        if (totalSupply() == 0) {
+            sharesToMint = valueAdded; // Initialize 1:1 (assuming base asset decimals is compatible or 18)
+        } else {
+            require(tvlBefore > 0, "StableFXAdapter: TVL zero error");
+            sharesToMint = (valueAdded * totalSupply()) / tvlBefore;
+        }
+        
+        require(sharesToMint > 0, "StableFXAdapter: Zero shares minted");
+        _mint(msg.sender, sharesToMint);
+        
+        emit LiquidityAdded(token, amount, sharesToMint);
+    }
+
+    /**
+     * @dev Removes Liquidity: User burns SFX-LP shares to withdraw a target token
+     */
+    function removeLiquidity(address targetToken, uint256 shares) external {
+        require(isAcceptedToken[targetToken], "StableFXAdapter: Token not accepted in pool");
+        require(shares > 0 && shares <= balanceOf(msg.sender), "StableFXAdapter: Insufficient shares");
+        
+        uint256 currentTvl = getTVL();
+        // TVL value the shares represent
+        uint256 valueToWithdraw = (shares * currentTvl) / totalSupply();
+        
+        // Convert the baseAsset-normalized value back to targetToken
+        uint256 amountToWithdraw = getEstimatedAmountInternal(baseAsset, targetToken, valueToWithdraw);
+        
+        uint256 available = IERC20(targetToken).balanceOf(address(this));
+        require(available >= amountToWithdraw, "StableFXAdapter: Insufficient token liquidity");
+        
+        _burn(msg.sender, shares);
+        
+        require(
+            IERC20(targetToken).transfer(msg.sender, amountToWithdraw),
+            "StableFXAdapter: Transfer failed"
+        );
+        
+        emit LiquidityRemoved(targetToken, amountToWithdraw, shares);
+    }
 
     /**
      * @dev Update exchange rate for a token pair
-     * @param tokenIn Input token address
-     * @param tokenOut Output token address
-     * @param rate Exchange rate with 18 decimals (e.g., 1.09e18 for 1 EUR = 1.09 USD)
-     * 
-     * Note: In production, these rates would be updated by an oracle or
-     * fetched from StableFX API in real-time
      */
     function setExchangeRate(
         address tokenIn,
@@ -87,53 +171,23 @@ contract StableFXAdapter is IFXEngine, Ownable {
         emit ExchangeRateUpdated(tokenIn, tokenOut, rate, block.timestamp);
     }
 
-    /**
-     * @dev Update slippage tolerance
-     * @param _slippageTolerance New tolerance in basis points
-     */
-    function setSlippageTolerance(uint256 _slippageTolerance) external onlyOwner {
-        require(_slippageTolerance <= MAX_SLIPPAGE, "StableFXAdapter: Slippage too high");
-        uint256 oldTolerance = slippageTolerance;
-        slippageTolerance = _slippageTolerance;
-        emit SlippageToleranceUpdated(oldTolerance, _slippageTolerance);
-    }
-
-    /**
-     * @dev Get current exchange rate for a token pair
-     * @param tokenIn Input token
-     * @param tokenOut Output token
-     * @return rate Current exchange rate with 18 decimals
-     */
     function getExchangeRate(
         address tokenIn,
         address tokenOut
     ) public view returns (uint256 rate) {
         if (tokenIn == tokenOut) {
-            return 1e18; // 1:1 for same token
+            return 1e18; // 1:1
         }
         
         rate = exchangeRates[tokenIn][tokenOut];
         require(rate > 0, "StableFXAdapter: Rate not configured");
         
-        // Check rate freshness
         uint256 rateAge = block.timestamp - rateTimestamps[tokenIn][tokenOut];
         require(rateAge <= RATE_VALIDITY, "StableFXAdapter: Rate expired");
         
         return rate;
     }
 
-    /**
-     * @dev Swap tokens using real-time market rates
-     * @param tokenIn Input token address
-     * @param tokenOut Output token address
-     * @param amountIn Amount of input tokens
-     * @param minAmountOut Minimum acceptable output (slippage protection)
-     * @param to Address that will receive the output tokens
-     * @return amountOut Actual output amount
-     * 
-     * Note: This is a simplified implementation for PayerX integration.
-     * For full StableFX integration, use the StableFX API for RFQ execution.
-     */
     function swap(
         address tokenIn,
         address tokenOut,
@@ -144,34 +198,33 @@ contract StableFXAdapter is IFXEngine, Ownable {
         require(amountIn > 0, "StableFXAdapter: Invalid amount");
         require(tokenIn != tokenOut, "StableFXAdapter: Same token");
         
-        // Get current exchange rate (from oracle or recent update)
         uint256 rate = getExchangeRate(tokenIn, tokenOut);
         
-        // Get token decimals
         uint256 tokenInDecimals = getTokenDecimals(tokenIn);
         uint256 tokenOutDecimals = getTokenDecimals(tokenOut);
         
-        // Calculate output amount: (amountIn * rate) / 1e18
-        // Adjust for decimal differences
+        // Base calculation
         amountOut = (amountIn * rate) / 1e18;
         
-        // Adjust decimals if needed
+        // Adjust decimals
         if (tokenInDecimals > tokenOutDecimals) {
             amountOut = amountOut / (10 ** (tokenInDecimals - tokenOutDecimals));
         } else if (tokenOutDecimals > tokenInDecimals) {
             amountOut = amountOut * (10 ** (tokenOutDecimals - tokenInDecimals));
         }
         
-        // Check slippage protection
+        // Take LP Fee (Fee stays in contract thereby increasing Pool TVL)
+        uint256 lpFee = (amountOut * lpFeeBps) / 10000;
+        amountOut = amountOut - lpFee;
+
         require(amountOut >= minAmountOut, "StableFXAdapter: Slippage exceeded");
         
-        // Check liquidity availability
+        uint256 availableLiquidity = IERC20(tokenOut).balanceOf(address(this));
         require(
-            liquidity[tokenOut] >= amountOut,
-            "StableFXAdapter: Insufficient liquidity"
+            availableLiquidity >= amountOut,
+            "StableFXAdapter: Insufficient pool liquidity"
         );
         
-        // Execute swap
         require(
             IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn),
             "StableFXAdapter: Transfer in failed"
@@ -182,103 +235,33 @@ contract StableFXAdapter is IFXEngine, Ownable {
             "StableFXAdapter: Transfer out failed"
         );
         
-        // Update liquidity
-        liquidity[tokenIn] += amountIn;
-        liquidity[tokenOut] -= amountOut;
-        
-        emit SwapExecuted(tokenIn, tokenOut, amountIn, amountOut, rate);
+        emit SwapExecuted(tokenIn, tokenOut, amountIn, amountOut, rate, lpFee);
         return amountOut;
     }
 
-    /**
-     * @dev Add liquidity to the adapter for instant swaps
-     * @param token Token address
-     * @param amount Amount to add
-     * 
-     * Note: In production with full StableFX, liquidity would be managed
-     * through StableFX escrow and maker funding
-     */
-    function addLiquidity(address token, uint256 amount) external onlyOwner {
-        require(amount > 0, "StableFXAdapter: Invalid amount");
-        
-        require(
-            IERC20(token).transferFrom(msg.sender, address(this), amount),
-            "StableFXAdapter: Transfer failed"
-        );
-        
-        liquidity[token] += amount;
-        emit LiquidityAdded(token, amount);
-    }
-
-    /**
-     * @dev Remove liquidity from the adapter
-     * @param token Token address
-     * @param amount Amount to remove
-     */
-    function removeLiquidity(address token, uint256 amount) external onlyOwner {
-        require(amount > 0, "StableFXAdapter: Invalid amount");
-        require(liquidity[token] >= amount, "StableFXAdapter: Insufficient liquidity");
-        
-        liquidity[token] -= amount;
-        
-        require(
-            IERC20(token).transfer(owner(), amount),
-            "StableFXAdapter: Transfer failed"
-        );
-        
-        emit LiquidityRemoved(token, amount);
-    }
-
-    /**
-     * @dev Emergency withdrawal for owner
-     * @param token Token to withdraw
-     * @param amount Amount to withdraw
-     */
-    function emergencyWithdraw(address token, uint256 amount) external onlyOwner {
-        require(
-            IERC20(token).transfer(owner(), amount),
-            "StableFXAdapter: Withdrawal failed"
-        );
-    }
-
-    /**
-     * @dev Check available liquidity for a token
-     * @param token Token address
-     * @return Available liquidity amount
-     */
-    function getLiquidity(address token) external view returns (uint256) {
-        return liquidity[token];
-    }
-
-    /**
-     * @dev Check if rate is fresh (within validity period)
-     * @param tokenIn Input token
-     * @param tokenOut Output token
-     * @return true if rate is fresh
-     */
-    function isRateFresh(address tokenIn, address tokenOut) external view returns (bool) {
-        if (tokenIn == tokenOut) return true;
-        
-        uint256 rateAge = block.timestamp - rateTimestamps[tokenIn][tokenOut];
-        return rateAge <= RATE_VALIDITY;
-    }
-
-    /**
-     * @dev Estimates the output amount for a given input amount
-     * @param tokenIn Input token
-     * @param tokenOut Output token
-     * @param amountIn Input amount
-     * @return estimatedAmountOut Expected output amount
-     */
     function getEstimatedAmount(
         address tokenIn,
         address tokenOut,
         uint256 amountIn
     ) external view override returns (uint256 estimatedAmountOut) {
+        uint256 baseExpected = getEstimatedAmountInternal(tokenIn, tokenOut, amountIn);
+        // deduct LP fee for exact public estimate
+        if (tokenIn != tokenOut) {
+            uint256 lpFee = (baseExpected * lpFeeBps) / 10000;
+            return baseExpected - lpFee;
+        }
+        return baseExpected;
+    }
+
+    // Internal helper without fee deduction used for TVL calculations
+    function getEstimatedAmountInternal(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn
+    ) internal view returns (uint256 estimatedAmountOut) {
         if (tokenIn == tokenOut) return amountIn;
         
-        uint256 rate = exchangeRates[tokenIn][tokenOut];
-        require(rate > 0, "StableFXAdapter: Rate not configured");
+        uint256 rate = getExchangeRate(tokenIn, tokenOut);
         
         uint256 tokenInDecimals = getTokenDecimals(tokenIn);
         uint256 tokenOutDecimals = getTokenDecimals(tokenOut);
@@ -294,22 +277,29 @@ contract StableFXAdapter is IFXEngine, Ownable {
         return estimatedAmountOut;
     }
 
-    /**
-     * @dev Get token decimals (helper function)
-     * @param token Token address
-     * @return Number of decimals
-     */
     function getTokenDecimals(address token) internal view returns (uint256) {
-        // Try to call decimals() function
         (bool success, bytes memory data) = token.staticcall(
             abi.encodeWithSignature("decimals()")
         );
-        
         if (success && data.length >= 32) {
             return abi.decode(data, (uint256));
         }
-        
-        // Default to 6 decimals for ARC stablecoins if call fails
-        return 6;
+        return 6; // Default ARC stables
+    }
+
+    function updateLpFee(uint256 newFeeBps) external onlyOwner {
+        require(newFeeBps <= 500, "StableFXAdapter: Fee too high"); // max 5%
+        lpFeeBps = newFeeBps;
+    }
+
+    /**
+     * @dev Emergency recovery for unexpected tokens (does not allow draining accepted LP tokens)
+     */
+    function emergencyWithdraw(address token, uint256 amount) external onlyOwner {
+        require(!isAcceptedToken[token], "StableFXAdapter: Cannot withdraw LP tokens directly");
+        require(
+            IERC20(token).transfer(owner(), amount),
+            "StableFXAdapter: Withdrawal failed"
+        );
     }
 }
