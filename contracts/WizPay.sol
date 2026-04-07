@@ -135,37 +135,49 @@ contract WizPay is Ownable, Pausable, ReentrancyGuard {
         uint256[] calldata minAmountsOut,
         string memory referenceId
     ) external nonReentrant whenNotPaused returns (uint256 totalOut) {
-        require(recipients.length > 0, "WizPay: empty batch");
-        require(
-            recipients.length == amountsIn.length && 
-            recipients.length == minAmountsOut.length,
-            "WizPay: array length mismatch"
-        );
-        require(recipients.length <= 50, "WizPay: batch too large");
-        require(bytes(referenceId).length > 0, "WizPay: referenceId required");
-        require(bytes(referenceId).length <= 64, "WizPay: referenceId too long");
+        _validateBatchInputs(recipients.length, amountsIn.length, minAmountsOut.length, referenceId);
+        return _batchRouteAndPay(tokenIn, tokenOut, recipients, amountsIn, minAmountsOut, referenceId);
+    }
+
+    /**
+     * @dev Mixed batch payout: a single input token can be routed into different
+     * output tokens per recipient in one atomic transaction.
+     */
+    function batchRouteAndPay(
+        address tokenIn,
+        address[] calldata tokenOuts,
+        address[] calldata recipients,
+        uint256[] calldata amountsIn,
+        uint256[] calldata minAmountsOut,
+        string memory referenceId
+    ) external nonReentrant whenNotPaused returns (uint256 totalOut) {
+        _validateBatchInputs(recipients.length, tokenOuts.length, amountsIn.length, minAmountsOut.length, referenceId);
 
         uint256 totalIn = 0;
         uint256 totalFees = 0;
-        totalOut = 0;
+        address summaryTokenOut = tokenOuts[0];
 
         for (uint256 i = 0; i < recipients.length; i++) {
             uint256 amountOut = _processPayment(
-                tokenIn, tokenOut, amountsIn[i], minAmountsOut[i], recipients[i]
+                tokenIn,
+                tokenOuts[i],
+                amountsIn[i],
+                minAmountsOut[i],
+                recipients[i]
             );
             totalIn += amountsIn[i];
             totalOut += amountOut;
+            totalFees += _calculateFee(amountsIn[i]);
 
-            // Calculate fee portion for tracking
-            if (feeBps > 0) {
-                totalFees += (amountsIn[i] * feeBps) / 10000;
+            if (summaryTokenOut != tokenOuts[i]) {
+                summaryTokenOut = address(0);
             }
         }
 
         emit BatchPaymentRouted(
             msg.sender,
             tokenIn,
-            tokenOut,
+            summaryTokenOut,
             totalIn,
             totalOut,
             totalFees,
@@ -202,22 +214,42 @@ contract WizPay is Ownable, Pausable, ReentrancyGuard {
         require(success, "WizPay: transferFrom failed");
 
         // Step 2: Calculate fee (if any)
-        uint256 feeAmount = 0;
-        uint256 amountAfterFee = amountIn;
-        
-        if (feeBps > 0 && feeCollector != address(0)) {
-            feeAmount = (amountIn * feeBps) / 10000;
-            amountAfterFee = amountIn - feeAmount;
-            
-            // Transfer fee to collector
-            if (feeAmount > 0) {
-                IERC20(tokenIn).transfer(feeCollector, feeAmount);
-                emit FeeCollected(tokenIn, feeAmount);
-            }
+        uint256 feeAmount = _calculateFee(amountIn);
+        uint256 amountAfterFee = amountIn - feeAmount;
+
+        if (feeAmount > 0) {
+            success = IERC20(tokenIn).transfer(feeCollector, feeAmount);
+            require(success, "WizPay: fee transfer failed");
+            emit FeeCollected(tokenIn, feeAmount);
+        }
+
+        if (tokenIn == tokenOut) {
+            require(
+                amountAfterFee >= minAmountOut,
+                "WizPay: direct transfer below minimum output"
+            );
+
+            success = IERC20(tokenOut).transfer(recipient, amountAfterFee);
+            require(success, "WizPay: direct transfer failed");
+
+            emit PaymentRouted(
+                msg.sender,
+                recipient,
+                tokenIn,
+                tokenOut,
+                amountIn,
+                amountAfterFee,
+                feeAmount
+            );
+
+            return amountAfterFee;
         }
 
         // Step 3: Approve FX Engine to spend our tokens
-        IERC20(tokenIn).approve(address(fxEngine), amountAfterFee);
+        success = IERC20(tokenIn).approve(address(fxEngine), 0);
+        require(success, "WizPay: approve reset failed");
+        success = IERC20(tokenIn).approve(address(fxEngine), amountAfterFee);
+        require(success, "WizPay: approve failed");
 
         // Step 4: Perform atomic swap through FX Engine
         // Adjust minAmountOut proportionally if fee was taken
@@ -246,6 +278,79 @@ contract WizPay is Ownable, Pausable, ReentrancyGuard {
         );
 
         return amountOut;
+    }
+
+    function _batchRouteAndPay(
+        address tokenIn,
+        address tokenOut,
+        address[] calldata recipients,
+        uint256[] calldata amountsIn,
+        uint256[] calldata minAmountsOut,
+        string memory referenceId
+    ) internal returns (uint256 totalOut) {
+        uint256 totalIn = 0;
+        uint256 totalFees = 0;
+
+        for (uint256 i = 0; i < recipients.length; i++) {
+            uint256 amountOut = _processPayment(
+                tokenIn,
+                tokenOut,
+                amountsIn[i],
+                minAmountsOut[i],
+                recipients[i]
+            );
+            totalIn += amountsIn[i];
+            totalOut += amountOut;
+            totalFees += _calculateFee(amountsIn[i]);
+        }
+
+        emit BatchPaymentRouted(
+            msg.sender,
+            tokenIn,
+            tokenOut,
+            totalIn,
+            totalOut,
+            totalFees,
+            recipients.length,
+            referenceId
+        );
+
+        return totalOut;
+    }
+
+    function _validateBatchInputs(
+        uint256 recipientsLength,
+        uint256 amountsLength,
+        uint256 minAmountsLength,
+        string memory referenceId
+    ) internal pure {
+        require(recipientsLength > 0, "WizPay: empty batch");
+        require(
+            recipientsLength == amountsLength && recipientsLength == minAmountsLength,
+            "WizPay: array length mismatch"
+        );
+        require(recipientsLength <= 50, "WizPay: batch too large");
+        require(bytes(referenceId).length > 0, "WizPay: referenceId required");
+        require(bytes(referenceId).length <= 64, "WizPay: referenceId too long");
+    }
+
+    function _validateBatchInputs(
+        uint256 recipientsLength,
+        uint256 tokenOutsLength,
+        uint256 amountsLength,
+        uint256 minAmountsLength,
+        string memory referenceId
+    ) internal pure {
+        require(recipientsLength == tokenOutsLength, "WizPay: array length mismatch");
+        _validateBatchInputs(recipientsLength, amountsLength, minAmountsLength, referenceId);
+    }
+
+    function _calculateFee(uint256 amountIn) internal view returns (uint256 feeAmount) {
+        if (feeBps == 0 || feeCollector == address(0)) {
+            return 0;
+        }
+
+        return (amountIn * feeBps) / 10000;
     }
 
     /**
@@ -362,6 +467,54 @@ contract WizPay is Ownable, Pausable, ReentrancyGuard {
         address tokenOut,
         uint256 amountIn
     ) external view returns (uint256 estimatedAmountOut) {
-        return fxEngine.getEstimatedAmount(tokenIn, tokenOut, amountIn);
+        if (amountIn == 0) {
+            return 0;
+        }
+
+        uint256 feeAmount = _calculateFee(amountIn);
+        uint256 amountAfterFee = amountIn - feeAmount;
+
+        if (tokenIn == tokenOut) {
+            return amountAfterFee;
+        }
+
+        return fxEngine.getEstimatedAmount(tokenIn, tokenOut, amountAfterFee);
+    }
+
+    function getBatchEstimatedOutputs(
+        address tokenIn,
+        address[] calldata tokenOuts,
+        uint256[] calldata amountsIn
+    )
+        external
+        view
+        returns (
+            uint256[] memory estimatedAmountsOut,
+            uint256 totalEstimatedOut,
+            uint256 totalFees
+        )
+    {
+        require(tokenOuts.length == amountsIn.length, "WizPay: array length mismatch");
+
+        estimatedAmountsOut = new uint256[](amountsIn.length);
+
+        for (uint256 i = 0; i < amountsIn.length; i++) {
+            uint256 feeAmount = _calculateFee(amountsIn[i]);
+            uint256 amountAfterFee = amountsIn[i] - feeAmount;
+
+            totalFees += feeAmount;
+
+            if (tokenIn == tokenOuts[i]) {
+                estimatedAmountsOut[i] = amountAfterFee;
+            } else {
+                estimatedAmountsOut[i] = fxEngine.getEstimatedAmount(
+                    tokenIn,
+                    tokenOuts[i],
+                    amountAfterFee
+                );
+            }
+
+            totalEstimatedOut += estimatedAmountsOut[i];
+        }
     }
 }

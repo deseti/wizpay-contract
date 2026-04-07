@@ -63,9 +63,15 @@ contract MockFXEngine is IFXEngine {
         require(amountIn > 0, "MockFXEngine: amountIn must be greater than zero");
         require(to != address(0), "MockFXEngine: recipient cannot be zero");
 
-        // Pull input tokens from caller
-        bool success = IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
-        require(success, "MockFXEngine: transferFrom failed");
+        if (tokenIn == tokenOut) {
+            require(amountIn >= minAmountOut, "MockFXEngine: slippage tolerance exceeded");
+
+            bool directSuccess = IERC20(tokenIn).transferFrom(msg.sender, to, amountIn);
+            require(directSuccess, "MockFXEngine: transferFrom failed");
+
+            emit SwapExecuted(tokenIn, tokenOut, amountIn, amountIn, to);
+            return amountIn;
+        }
 
         // Calculate output amount based on exchange rate
         uint256 rate = exchangeRates[tokenIn][tokenOut];
@@ -80,6 +86,13 @@ contract MockFXEngine is IFXEngine {
 
         // Enforce slippage protection
         require(amountOut >= minAmountOut, "MockFXEngine: slippage tolerance exceeded");
+
+        uint256 availableLiquidity = IERC20(tokenOut).balanceOf(address(this));
+        require(availableLiquidity >= amountOut, "MockFXEngine: insufficient liquidity");
+
+        // Pull input tokens from caller
+        bool success = IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn);
+        require(success, "MockFXEngine: transferFrom failed");
 
         // Send output tokens to recipient
         success = IERC20(tokenOut).transfer(to, amountOut);
@@ -97,6 +110,10 @@ contract MockFXEngine is IFXEngine {
         address tokenOut,
         uint256 amountIn
     ) external view override returns (uint256 estimatedAmountOut) {
+        if (tokenIn == tokenOut) {
+            return amountIn;
+        }
+
         uint256 rate = exchangeRates[tokenIn][tokenOut];
         if (rate == 0) return 0;
         return (amountIn * rate) / 1e18;
