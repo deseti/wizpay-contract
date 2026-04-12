@@ -9,7 +9,7 @@ async function main() {
     console.log("📝 Account:", deployer.address);
     
     // Hardcoded from our recent deployment response
-    const STABLEFX_ADAPTER_ADDRESS = "0x70Ed968B83F32ab7cA17e5dCB82db970FE8a0bD0";
+    const STABLEFX_ADAPTER_ADDRESS = "0x400d3935B904cbdB6B5eb2Fd50E6843f1b0AD8d6";
     const USDC_ADDRESS = "0x3600000000000000000000000000000000000000";
     const EURC_ADDRESS = "0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a";
 

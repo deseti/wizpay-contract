@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const artifactPath = path.join(__dirname, "artifacts", "contracts", "StableFXAdapter.sol", "StableFXAdapter.json");
+const artifactPath = path.join(__dirname, "artifacts", "contracts", "StableFXAdapter_V2.sol", "StableFXAdapter_V2.json");
 const artifact = JSON.parse(fs.readFileSync(artifactPath, "utf-8"));
 
 const fileContent = `export const STABLE_FX_ADAPTER_ABI = ${JSON.stringify(artifact.abi, null, 2)} as const;\n`;
