@@ -54,7 +54,7 @@ async function main() {
     ];
 
     // Analysis
-    console.log("📊 Status Liquidity:");
+    console.log("📊 Liquidity Status:");
     console.log("=".repeat(70));
 
     let overallHealth = "HEALTHY";
@@ -112,7 +112,7 @@ async function main() {
         console.log(`  Health Status:        ${status}`);
 
         if (recommendations.length > 0) {
-            console.log(`\n  💡 Rekomendasi:`);
+            console.log(`\n  💡 Recommendations:`);
             recommendations.forEach(rec => {
                 console.log(`     • ${rec}`);
             });
@@ -121,7 +121,7 @@ async function main() {
 
     // Overall summary
     console.log("\n" + "=".repeat(70));
-    console.log("📋 RINGKASAN:");
+    console.log("📋 SUMMARY:");
     console.log("=".repeat(70));
 
     let healthIcon = "🟢";
@@ -141,7 +141,7 @@ async function main() {
 
     // Capacity analysis
     console.log("\n" + "=".repeat(70));
-    console.log("📈 ANALISIS KAPASITAS:");
+    console.log("📈 CAPACITY ANALYSIS:");
     console.log("=".repeat(70));
 
     const usdcMappingFloat = parseFloat(hre.ethers.formatUnits(usdcMapping, 6));

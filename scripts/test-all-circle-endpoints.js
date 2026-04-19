@@ -7,7 +7,7 @@ const CIRCLE_API_KEY = process.env.CIRCLE_API_KEY;
 const CIRCLE_API_BASE_URL = 'https://api-sandbox.circle.com';
 
 /**
- * Test berbagai Circle API endpoints untuk menemukan yang accessible
+ * Test various Circle API endpoints to find which ones are accessible
  */
 
 async function testCircleEndpoints() {
