@@ -6,13 +6,13 @@ import hre from "hardhat";
  */
 async function main() {
     console.log("╔════════════════════════════════════════════════════════════════╗");
-    console.log("║     🧾 PayerX Batch Payroll Test - ARC Testnet               ║");
+    console.log("║     🧾 WizPay Batch Payroll Test - ARC Testnet               ║");
     console.log("║     3 Recipients | EURC → USDC | Real StableFX Rates         ║");
     console.log("╚════════════════════════════════════════════════════════════════╝\n");
 
     const [deployer] = await hre.ethers.getSigners();
     const ADAPTER = "0xd39d4e6e15000fb6039C491BEBfaf93dC9048F9F";
-    const PAYERX  = "0xB94700A4eC6AAb8e49d24eA73aA80Dbb98a09Dd7";
+    const WIZPAY  = "0xB94700A4eC6AAb8e49d24eA73aA80Dbb98a09Dd7";
     const EURC    = "0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a";
     const USDC    = "0x3600000000000000000000000000000000000000";
 
@@ -78,12 +78,12 @@ async function main() {
         process.exit(1);
     }
 
-    // ── Step 2: Approve PayerX to spend total EURC ────────────────
+    // ── Step 2: Approve WizPay to spend total EURC ────────────────
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("Step 2: Approve PayerX Contract");
+    console.log("Step 2: Approve WizPay Contract");
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
-    const approveTx = await eurc.approve(PAYERX, totalInput);
+    const approveTx = await eurc.approve(WIZPAY, totalInput);
     await approveTx.wait();
     console.log(`   ✅ Approved ${hre.ethers.formatUnits(totalInput, 6)} EURC`);
     console.log(`   Tx: ${approveTx.hash}\n`);
@@ -110,9 +110,9 @@ async function main() {
     const startTime = Date.now();
 
     try {
-        const payerx = await hre.ethers.getContractAt("PayerX", PAYERX);
+        const wizpay = await hre.ethers.getContractAt("WizPay", WIZPAY);
 
-        const batchTx = await payerx.batchRouteAndPay(
+        const batchTx = await wizpay.batchRouteAndPay(
             EURC,
             USDC,
             recipients,
@@ -139,15 +139,15 @@ async function main() {
         console.log();
 
         // Parse events
-        const payerxContract = await hre.ethers.getContractAt("PayerX", PAYERX);
-        const batchFilter = payerxContract.filters.BatchPaymentRouted;
-        const paymentFilter = payerxContract.filters.PaymentRouted;
+        const wizpayContract = await hre.ethers.getContractAt("WizPay", WIZPAY);
+        const batchFilter = wizpayContract.filters.BatchPaymentRouted;
+        const paymentFilter = wizpayContract.filters.PaymentRouted;
 
         console.log("   📤 Individual Payment Events:");
         let eventCount = 0;
         for (const log of receipt.logs) {
             try {
-                const parsed = payerxContract.interface.parseLog(log);
+                const parsed = wizpayContract.interface.parseLog(log);
                 if (parsed && parsed.name === "PaymentRouted") {
                     eventCount++;
                     const recip = parsed.args[1];

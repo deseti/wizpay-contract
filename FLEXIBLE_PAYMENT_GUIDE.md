@@ -1,4 +1,4 @@
-# PayerX - Flexible Payment Router
+# WizPay - Flexible Payment Router
 
 Complete, non-custodial smart payment router for Circle StableFX on ARC Testnet.
 
@@ -54,13 +54,13 @@ https://testnet.arcscan.app/tx/0x...
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ 4. Approve Tokens                                           │
-│    Sender approves PayerX to spend EURC                    │
+│    Sender approves WizPay to spend EURC                    │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ 5. Execute Payment                                          │
 │    ┌──────────────────────────────────────────────────┐    │
-│    │ EURC (from sender) → PayerX → Adapter → Swap   │    │
+│    │ EURC (from sender) → WizPay → Adapter → Swap   │    │
 │    │                                                  │    │
 │    │ Adapter converts EURC to USDC at 1:1.16 rate   │    │
 │    │                                                  │    │
@@ -73,7 +73,7 @@ https://testnet.arcscan.app/tx/0x...
 
 ### Contracts
 
-- **PayerX** (0x570b3d069b3350C54Ec5E78E8b2c2677ddb38C0C)
+- **WizPay** (0x570b3d069b3350C54Ec5E78E8b2c2677ddb38C0C)
   - Non-custodial payment router
   - Routes EURC → USDC through FX engine
   - Handles approvals and execution
@@ -152,7 +152,7 @@ All payments are verified on real ARC Testnet:
 | File | Purpose |
 |------|---------|
 | `scripts/flexible-payment.js` | Main payment script (edit & run) |
-| `contracts/PayerX.sol` | Non-custodial router contract |
+| `contracts/WizPay.sol` | Non-custodial router contract |
 | `contracts/IFXEngine.sol` | FX engine interface |
 | `hardhat.config.js` | Network configuration |
 

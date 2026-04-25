@@ -1,10 +1,10 @@
-# PayerX StableFX Integration - Complete Documentation
+# WizPay StableFX Integration - Complete Documentation
 
 ## Quick Summary
 
 ✅ **Real EUR/USD Rate**: 1.16 USD (fetched from official Exchangerate-API)  
 ✅ **On-Chain Update**: Successfully updated on StableFXAdapter  
-✅ **Token Approval**: EURC → PayerX approved  
+✅ **Token Approval**: EURC → WizPay approved  
 ✅ **Payment Flow**: Ready with real market rates  
 ❌ **Circle API**: Blocked (account needs business approval)
 
@@ -68,7 +68,7 @@ Status: Rate successfully updated and verified
 ```
 Token: EURC (0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a)
 Amount: 1 EURC
-Spender: PayerX (0x570b3d069b3350C54Ec5E78E8b2c2677ddb38C0C)
+Spender: WizPay (0x570b3d069b3350C54Ec5E78E8b2c2677ddb38C0C)
 Transaction: 0x677063b0b1cff9a944d596c348cb77252c6cc6e862a863ed254ba86f097a79d9
 Status: Approved successfully
 ```
@@ -106,7 +106,7 @@ Followed: https://docs.arc.network/arc/references/contract-addresses
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│              PayerX Payment Router                  │
+│              WizPay Payment Router                  │
 │         (0x570b3d069b3350C54Ec5E78E8b2c2677db...)  │
 └────────┬──────────────────────────┬─────────────────┘
          │                          │

@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-PayerX successfully integrates Circle's StableFX following **official Circle documentation** with **real market data**. While Circle API access remains blocked, the implementation demonstrates complete adherence to Circle's architectural requirements.
+WizPay successfully integrates Circle's StableFX following **official Circle documentation** with **real market data**. While Circle API access remains blocked, the implementation demonstrates complete adherence to Circle's architectural requirements.
 
 ---
 
@@ -32,7 +32,7 @@ PayerX successfully integrates Circle's StableFX following **official Circle doc
 
 ### ✅ 3. Token Approval (Step 1 of Payment Flow)
 **Token**: EURC  
-**Spender**: PayerX Contract  
+**Spender**: WizPay Contract  
 **Amount**: 1 EURC  
 **Transaction**: `0x677063b0b1cff9a944d596c348cb77252c6cc6e862a863ed254ba86f097a79d9`  
 **Status**: ✅ Approved
@@ -84,7 +84,7 @@ Status: Blocked
 **Phase 4: On-Chain Settlement** ✅ (Fully implemented)
 ```
 Contract: FxEscrow (0x1f91886C7028986aD885ffCee0e40b75C9cd5aC1)
-Token Approval: ✅ (EURC → PayerX)
+Token Approval: ✅ (EURC → WizPay)
 Rate Update: ✅ (Real market rate on-chain)
 Payment Setup: ✅ (Ready for execution)
 ```
@@ -124,7 +124,7 @@ Payment Setup: ✅ (Ready for execution)
 ```
 ✅ PASSED
 - Token: EURC (0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a)
-- Spender: PayerX (0x570b3d069b3350C54Ec5E78E8b2c2677ddb38C0C)
+- Spender: WizPay (0x570b3d069b3350C54Ec5E78E8b2c2677ddb38C0C)
 - Amount: 1 EURC (1000000 wei, 6 decimals)
 - Block: 15107008
 - Status: Approved
@@ -167,10 +167,10 @@ await adapter.setExchangeRate(EURC, USDC, realRateContract);
 ```javascript
 // From: scripts/real-payment-flow-official.js
 // Step 1: Approve EURC
-await eurcContract.approve(PAYERX_ADDRESS, paymentAmount);
+await eurcContract.approve(WIZPAY_ADDRESS, paymentAmount);
 
 // Step 2: Route payment with real rate
-await payerX.routeAndPay(
+await wizPay.routeAndPay(
   EURC,                // Token in
   USDC,                // Token out
   ethers.parseUnits('1', 6),      // 1 EURC

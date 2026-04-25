@@ -14,7 +14,7 @@ async function main() {
     const [deployer] = await hre.ethers.getSigners();
 
     const ADAPTER_ADDRESS = process.env.STABLEFX_ADAPTER_ADDRESS;
-    const PAYERX_ADDRESS = process.env.PAYERX_ADDRESS;
+    const WIZPAY_ADDRESS = process.env.WIZPAY_ADDRESS;
     const EURC = process.env.ARC_EURC;
     const USDC = process.env.ARC_USDC;
 
@@ -127,7 +127,7 @@ async function main() {
     // Step 4: Approve EURC
     // ============================================================
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("Step 4: Approve EURC to PayerX");
+    console.log("Step 4: Approve EURC to WizPay");
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log();
 
@@ -137,7 +137,7 @@ async function main() {
 
         const approveAmount = hre.ethers.parseUnits("1", 6);
         console.log("Approving 1 EURC...");
-        const approveTx = await eurc.approve(PAYERX_ADDRESS, approveAmount);
+        const approveTx = await eurc.approve(WIZPAY_ADDRESS, approveAmount);
 
         const approveReceipt = await approveTx.wait();
         console.log("✅ Approved");
@@ -162,10 +162,10 @@ async function main() {
         const data = await response.json();
         const rate = data.rates.USD;
 
-        const payerxABI = [
+        const wizpayABI = [
             "function routeAndPay(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut, address recipient) external"
         ];
-        const payerx = new hre.ethers.Contract(PAYERX_ADDRESS, payerxABI, deployer);
+        const wizpay = new hre.ethers.Contract(WIZPAY_ADDRESS, wizpayABI, deployer);
 
         const amountIn = hre.ethers.parseUnits("1", 6);
         const minAmountOut = 0n;
@@ -177,7 +177,7 @@ async function main() {
         console.log();
 
         console.log("Executing payment...");
-        const paymentTx = await payerx.routeAndPay(
+        const paymentTx = await wizpay.routeAndPay(
             EURC,
             USDC,
             amountIn,

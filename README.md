@@ -1,10 +1,10 @@
 # WizPay- ARC Smart Payment Router
 
-A **production-ready**, non-custodial Smart Payment Router for the **ARC Layer-1 blockchain** by Circle. PayerX enables atomic cross-stablecoin payments with advanced features like fee collection, emergency pause, and token whitelisting.
+A **production-ready**, non-custodial Smart Payment Router for the **ARC Layer-1 blockchain** by Circle. WizPay enables atomic cross-stablecoin payments with advanced features like fee collection, emergency pause, and token whitelisting.
 
 ## 🌟 Overview
 
-PayerX allows senders to pay using one stablecoin (e.g., EURC) while recipients receive another (e.g., USDC) in a single, atomic transaction. Built specifically for the ARC blockchain, which uses USDC as native gas and features built-in FX capabilities.
+WizPay allows senders to pay using one stablecoin (e.g., EURC) while recipients receive another (e.g., USDC) in a single, atomic transaction. Built specifically for the ARC blockchain, which uses USDC as native gas and features built-in FX capabilities.
 
 ### ✨ Key Features
 
@@ -22,7 +22,7 @@ PayerX allows senders to pay using one stablecoin (e.g., EURC) while recipients 
 
 ### Core Components
 
-1. **PayerX.sol** - Main router contract (2.07M gas deployment)
+1. **WizPay.sol** - Main router contract (2.07M gas deployment)
 2. **StableFXAdapter.sol** - Adapter for Circle's StableFX with real market rates
 3. **MockFXEngine.sol** - Test FX engine for local development
 4. **IFXEngine.sol** - Generic interface for FX engines
@@ -33,7 +33,7 @@ PayerX allows senders to pay using one stablecoin (e.g., EURC) while recipients 
 
 ```mermaid
 graph LR
-    A[User] -->|1. Approve| B[PayerX]
+    A[User] -->|1. Approve| B[WizPay]
     A -->|2. routeAndPay| B
     B -->|3. Pull tokenIn| A
     B -->|4. Deduct Fee| C[Fee Collector]
@@ -111,7 +111,7 @@ function routeAndPay(
 **Requirements:**
 - Contract must not be paused
 - Tokens must be whitelisted (if whitelist is enabled)
-- Sender must approve PayerX for at least `amountIn`
+- Sender must approve WizPay for at least `amountIn`
 - All addresses must be non-zero
 - `amountIn` must be greater than zero
 
@@ -200,7 +200,7 @@ npx hardhat test
 
 Gas Usage:
 - routeAndPay: 130k - 158k gas (avg: 148k)
-- Deploy PayerX: ~2.07M gas
+- Deploy WizPay: ~2.07M gas
 - updateFXEngine: ~31k gas
 ```
 
@@ -233,7 +233,7 @@ cp .env.example .env
 #### Option A: Quick Start (Test with Mock Rates)
 
 ```bash
-# Step 1: Deploy contracts (PayerX + MockFXEngine)
+# Step 1: Deploy contracts (WizPay + MockFXEngine)
 node scripts/deploy-arc.js
 
 # Step 2: Fund MockFXEngine with REAL tokens (after getting from faucet)
@@ -246,7 +246,7 @@ node scripts/test-payment.js
 #### Option B: Production Setup (Real Market Rates)
 
 ```bash
-# Step 1: Deploy PayerX with MockFXEngine (initial)
+# Step 1: Deploy WizPay with MockFXEngine (initial)
 node scripts/deploy-arc.js
 
 # Step 2: Deploy StableFXAdapter for real rates
@@ -255,7 +255,7 @@ node scripts/deploy-stablefx-adapter.js
 # Step 3: Fund adapter with liquidity
 node scripts/fund-adapter.js
 
-# Step 4: Migrate PayerX to use real rates
+# Step 4: Migrate WizPay to use real rates
 node scripts/migrate-to-stablefx.js
 
 # Step 5: Test with real market rates
@@ -267,11 +267,11 @@ See [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) for detailed migration steps.
 ### What Gets Deployed
 
 **Quick Start (Mock):**
-- ✅ PayerX Contract (main router)
+- ✅ WizPay Contract (main router)
 - ✅ MockFXEngine (hardcoded rates: 1 EURC = 1.1 USDC)
 
 **Production (Real Rates):**
-- ✅ PayerX Contract (main router)
+- ✅ WizPay Contract (main router)
 - ✅ StableFXAdapter (real market rates: 1 EURC = 1.09 USDC)
 - ✅ Integration with Circle's StableFX
 
@@ -284,7 +284,7 @@ See [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) for detailed migration steps.
 
 The script will:
 1. ✅ Deploy MockFXEngine with configurable exchange rates
-2. ✅ Deploy PayerX with your fee configuration
+2. ✅ Deploy WizPay with your fee configuration
 3. ✅ Setup token whitelist (all 3 ARC stablecoins)
 4. ✅ Save deployment info to `deployments/arc-testnet.json`
 
@@ -300,22 +300,22 @@ npx hardhat compile
 npx hardhat console --network arc-testnet
 
 # 3. In console:
-const PayerX = await ethers.getContractFactory("PayerX");
-const payerX = await PayerX.deploy(
+const WizPay = await ethers.getContractFactory("WizPay");
+const wizPay = await WizPay.deploy(
   "0xYourFXEngineAddress",
   "0xYourFeeCollector",
   10  // 0.1% fee
 );
-await payerX.waitForDeployment();
-console.log("PayerX deployed to:", await payerX.getAddress());
+await wizPay.waitForDeployment();
+console.log("WizPay deployed to:", await wizPay.getAddress());
 ```
 
 ## 📦 Project Structure
 
 ```
-PayerX_Router/
+WizPay_Router/
 ├── contracts/
-│   ├── PayerX.sol              # Main router (enhanced v2)
+│   ├── WizPay.sol              # Main router (enhanced v2)
 │   ├── IERC20.sol              # ERC20 interface
 │   ├── IFXEngine.sol           # Generic FX engine interface
 │   ├── IPermit2.sol            # Permit2 interface (StableFX)
@@ -325,7 +325,7 @@ PayerX_Router/
 ├── scripts/
 │   └── deploy-arc.js           # ARC Testnet deployment
 ├── test/
-│   └── PayerX.js               # Comprehensive test suite (23 tests)
+│   └── WizPay.js               # Comprehensive test suite (23 tests)
 ├── deployments/                # Deployment artifacts
 ├── hardhat.config.js           # Main config
 ├── hardhat.config.arc.js       # ARC-specific config
@@ -338,7 +338,7 @@ PayerX_Router/
 ```bash
 # Clone repository
 git clone <your-repo-url>
-cd PayerX_Router
+cd WizPay_Router
 
 # Install dependencies
 npm install --legacy-peer-deps
@@ -387,10 +387,10 @@ By default, whitelist is **disabled** (flexible mode). To enable:
 
 ```solidity
 // Enable whitelist
-await payerX.setWhitelistEnabled(true);
+await wizPay.setWhitelistEnabled(true);
 
 // Add tokens to whitelist
-await payerX.batchSetTokenWhitelist(
+await wizPay.batchSetTokenWhitelist(
   ["0xUSDC", "0xEURC", "0xUSDT"],
   true
 );
@@ -404,15 +404,15 @@ await payerX.batchSetTokenWhitelist(
 const { ethers } = require("ethers");
 
 // Setup
-const payerX = await ethers.getContractAt("PayerX", PAYERX_ADDRESS);
+const wizPay = await ethers.getContractAt("WizPay", WIZPAY_ADDRESS);
 const eurc = await ethers.getContractAt("IERC20", EURC_ADDRESS);
 
-// 1. Approve PayerX
+// 1. Approve WizPay
 const amount = ethers.parseUnits("1000", 6); // 1000 EURC
-await eurc.approve(PAYERX_ADDRESS, amount);
+await eurc.approve(WIZPAY_ADDRESS, amount);
 
 // 2. Get estimated output
-const estimated = await payerX.getEstimatedOutput(
+const estimated = await wizPay.getEstimatedOutput(
   EURC_ADDRESS,
   USDC_ADDRESS,
   amount
@@ -420,7 +420,7 @@ const estimated = await payerX.getEstimatedOutput(
 
 // 3. Execute payment with 1% slippage tolerance
 const minOut = (estimated * 99n) / 100n;
-await payerX.routeAndPay(
+await wizPay.routeAndPay(
   EURC_ADDRESS,
   USDC_ADDRESS,
   amount,
@@ -433,19 +433,19 @@ await payerX.routeAndPay(
 
 ```javascript
 // Update fee to 0.2%
-await payerX.updateFee(20);
+await wizPay.updateFee(20);
 
 // Change fee collector
-await payerX.updateFeeCollector(NEW_COLLECTOR);
+await wizPay.updateFeeCollector(NEW_COLLECTOR);
 
 // Emergency pause
-await payerX.pause();
+await wizPay.pause();
 
 // Resume operations
-await payerX.unpause();
+await wizPay.unpause();
 
 // Update FX Engine
-await payerX.updateFXEngine(NEW_FX_ENGINE);
+await wizPay.updateFXEngine(NEW_FX_ENGINE);
 ```
 
 ## Dependencies
@@ -497,15 +497,15 @@ Before mainnet deployment:
 
 ## 🤝 Integration with StableFX
 
-PayerX is designed to work with ARC's native StableFX engine. To integrate:
+WizPay is designed to work with ARC's native StableFX engine. To integrate:
 
 ### Option 1: Direct Integration (Recommended for Production)
 
 Replace `MockFXEngine` with actual StableFX contract:
 
 ```solidity
-// Deploy PayerX with StableFX Escrow
-const payerX = await PayerX.deploy(
+// Deploy WizPay with StableFX Escrow
+const wizPay = await WizPay.deploy(
   "0x1f91886C7028986aD885ffCee0e40b75C9cd5aC1", // StableFX Escrow
   feeCollector,
   feeBps
@@ -530,11 +530,11 @@ contract StableFXAdapter is IFXEngine {
 
 ## 📊 Gas Optimization
 
-PayerX is optimized for ARC's ~$0.01 target transaction cost:
+WizPay is optimized for ARC's ~$0.01 target transaction cost:
 
 | Operation | Gas Usage | Cost @ 160 Gwei | Notes |
 |-----------|-----------|-----------------|-------|
-| Deploy PayerX | 2,074,444 | One-time | Includes all features |
+| Deploy WizPay | 2,074,444 | One-time | Includes all features |
 | routeAndPay | 130k - 158k | ~$0.01 | Depends on token transfers |
 | updateFee | 31,014 | <$0.01 | Admin function |
 | pause/unpause | ~23k | <$0.01 | Emergency function |
@@ -551,12 +551,12 @@ Select: Arc Testnet
 Request: USDC (used for gas on ARC)
 ```
 
-**2. "PayerX: tokenIn not whitelisted"**
+**2. "WizPay: tokenIn not whitelisted"**
 ```bash
 # Solution: Disable whitelist or add token
-await payerX.setWhitelistEnabled(false);
+await wizPay.setWhitelistEnabled(false);
 # OR
-await payerX.setTokenWhitelist(tokenAddress, true);
+await wizPay.setTokenWhitelist(tokenAddress, true);
 ```
 
 **3. "Slippage tolerance exceeded"**
@@ -568,7 +568,7 @@ const minOut = (estimatedAmount * 95n) / 100n; // 5% slippage
 **4. "Contract is paused"**
 ```bash
 # Solution: Unpause contract (owner only)
-await payerX.unpause();
+await wizPay.unpause();
 ```
 
 ## 📚 Additional Resources

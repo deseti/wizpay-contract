@@ -4,7 +4,7 @@ dotenv.config();
 
 /**
  * Deploy StableFXAdapter_V2 to ARC Testnet
- * This adapter bridges PayerX with Circle's StableFX for real-time market rates
+ * This adapter bridges WizPay with Circle's StableFX for real-time market rates
  */
 async function main() {
     console.log("🚀 Deploying StableFXAdapter_V2 to ARC Testnet...\n");
@@ -114,7 +114,7 @@ async function main() {
     console.log("2. Fund the adapter with liquidity:");
     console.log(`   node scripts/fund-adapter.js`);
     console.log();
-    console.log("3. Migrate PayerX to use new adapter:");
+    console.log("3. Migrate WizPay to use new adapter:");
     console.log(`   node scripts/migrate-to-stablefx.js`);
     console.log();
     console.log("4. Test payment flows with real rates:");

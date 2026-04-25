@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 /**
- * Truly Flexible PayerX Payment Script
+ * Truly Flexible WizPay Payment Script
  * Configure using environment variables
  * 
  * Usage:
@@ -20,7 +20,7 @@ async function main() {
     // Show usage if not provided
     if (!amountEurc || !recipientAddress) {
         console.log("╔════════════════════════════════════════════════════════════════╗");
-        console.log("║  PayerX Flexible Payment Router - EURC → USDC                  ║");
+        console.log("║  WizPay Flexible Payment Router - EURC → USDC                  ║");
         console.log("╚════════════════════════════════════════════════════════════════╝\n");
         console.log("Usage (PowerShell):");
         console.log('  $env:AMOUNT="0.1"; $env:RECIPIENT="0xef6582d8bd8c5e6f1ca37181b4b6284c945b3484"; npx hardhat run scripts/payment.js --network arc-testnet\n');
@@ -40,13 +40,13 @@ async function main() {
 
     const [deployer] = await hre.ethers.getSigners();
 
-    const PAYERX_ADDRESS = process.env.PAYERX_ADDRESS;
+    const WIZPAY_ADDRESS = process.env.WIZPAY_ADDRESS;
     const ADAPTER_ADDRESS = process.env.STABLEFX_ADAPTER_ADDRESS;
     const EURC = process.env.ARC_EURC;
     const USDC = process.env.ARC_USDC;
 
     console.log("╔════════════════════════════════════════════════════════════════╗");
-    console.log("║  PayerX Flexible Payment Router                               ║");
+    console.log("║  WizPay Flexible Payment Router                               ║");
     console.log("║  Send " + amountEurc + " EURC → USDC                                        ║");
     console.log("╚════════════════════════════════════════════════════════════════╝\n");
 
@@ -151,7 +151,7 @@ async function main() {
     // Step 4: Approve Tokens
     // ============================================================
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("Step 4: Approve " + amountEurc + " EURC to PayerX");
+    console.log("Step 4: Approve " + amountEurc + " EURC to WizPay");
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log();
 
@@ -162,7 +162,7 @@ async function main() {
         const approveAmount = hre.ethers.parseUnits(amountEurc, 6);
         console.log("Approving " + amountEurc + " EURC...");
 
-        const approveTx = await eurc.approve(PAYERX_ADDRESS, approveAmount);
+        const approveTx = await eurc.approve(WIZPAY_ADDRESS, approveAmount);
         await approveTx.wait();
 
         console.log("✅ Approved");
@@ -184,10 +184,10 @@ async function main() {
     console.log();
 
     try {
-        const payerxABI = [
+        const wizpayABI = [
             "function routeAndPay(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut, address recipient) external"
         ];
-        const payerx = new hre.ethers.Contract(PAYERX_ADDRESS, payerxABI, deployer);
+        const wizpay = new hre.ethers.Contract(WIZPAY_ADDRESS, wizpayABI, deployer);
 
         const amountIn = hre.ethers.parseUnits(amountEurc, 6);
         const minOut = 0n; // Let adapter handle slippage
@@ -202,7 +202,7 @@ async function main() {
         console.log();
 
         console.log("Executing payment on real ARC Testnet...");
-        const paymentTx = await payerx.routeAndPay(
+        const paymentTx = await wizpay.routeAndPay(
             EURC,                   // tokenIn
             USDC,                   // tokenOut
             amountIn,               // amount

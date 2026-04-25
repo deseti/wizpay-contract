@@ -126,7 +126,7 @@ async function main() {
         console.log("✅ Adapter funded successfully!");
         console.log();
         console.log("💡 Next Step:");
-        console.log("   Migrate PayerX to use StableFXAdapter:");
+        console.log("   Migrate WizPay to use StableFXAdapter:");
         console.log("   node scripts/migrate-to-stablefx.js");
     } else {
         console.log("⚠️  No tokens were funded. Get testnet tokens first:");

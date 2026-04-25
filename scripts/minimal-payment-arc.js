@@ -13,7 +13,7 @@ async function main() {
 
     const [deployer] = await hre.ethers.getSigners();
 
-    const PAYERX_ADDRESS = process.env.PAYERX_ADDRESS;
+    const WIZPAY_ADDRESS = process.env.WIZPAY_ADDRESS;
     const ADAPTER_ADDRESS = process.env.STABLEFX_ADAPTER_ADDRESS;
     const EURC = process.env.ARC_EURC;
     const USDC = process.env.ARC_USDC;
@@ -64,7 +64,7 @@ async function main() {
         const approveAmount = hre.ethers.parseUnits("0.01", 6);
         console.log("Approving " + hre.ethers.formatUnits(approveAmount, 6) + " EURC...");
 
-        const approveTx = await eurc.approve(PAYERX_ADDRESS, approveAmount);
+        const approveTx = await eurc.approve(WIZPAY_ADDRESS, approveAmount);
         const approveReceipt = await approveTx.wait();
 
         console.log("✅ Approved");
@@ -90,10 +90,10 @@ async function main() {
         const data = await response.json();
         const rate = data.rates.USD;
 
-        const payerxABI = [
+        const wizpayABI = [
             "function routeAndPay(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut, address recipient) external"
         ];
-        const payerx = new hre.ethers.Contract(PAYERX_ADDRESS, payerxABI, deployer);
+        const wizpay = new hre.ethers.Contract(WIZPAY_ADDRESS, wizpayABI, deployer);
 
         const amountIn = hre.ethers.parseUnits("0.01", 6);
         // Use 0 to bypass adapter's internal slippage tolerance
@@ -107,7 +107,7 @@ async function main() {
         console.log();
 
         console.log("Executing...");
-        const paymentTx = await payerx.routeAndPay(
+        const paymentTx = await wizpay.routeAndPay(
             EURC,
             USDC,
             amountIn,

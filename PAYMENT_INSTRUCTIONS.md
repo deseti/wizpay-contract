@@ -1,4 +1,4 @@
-# PayerX - Flexible Payment Script
+# WizPay - Flexible Payment Script
 
 **Send any amount of EURC → USDC on Arc Testnet with real market rates**
 
@@ -28,7 +28,7 @@ AMOUNT=0.1 RECIPIENT=0xef6582d8bd8c5e6f1ca37181b4b6284c945b3484 npx hardhat run 
 1. **Checks balance** - Verifies you have sufficient EURC
 2. **Fetches real rate** - Gets live EUR/USD from official API (1 EUR = 1.16 USD)
 3. **Updates adapter** - Sets exchange rate on contract
-4. **Approves tokens** - Grants PayerX permission to spend EURC
+4. **Approves tokens** - Grants WizPay permission to spend EURC
 5. **Executes payment** - Routes EURC → USDC to recipient
 6. **Shows transaction** - Links to ARC Explorer for verification
 
@@ -74,7 +74,7 @@ All payments execute on **real Arc Testnet** (Chain ID 5042002):
 ## Architecture
 
 ```
-User sends EURC → PayerX Contract → Adapter (converts via rate) → USDC → Recipient
+User sends EURC → WizPay Contract → Adapter (converts via rate) → USDC → Recipient
 ```
 
 All token flows are direct and non-custodial.
@@ -97,7 +97,7 @@ All token flows are direct and non-custodial.
 ## Files
 
 - `scripts/payment.js` - Main payment script
-- `contracts/PayerX.sol` - Non-custodial router
+- `contracts/WizPay.sol` - Non-custodial router
 - `hardhat.config.js` - Network config
 
 ## Network

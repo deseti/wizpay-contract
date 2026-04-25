@@ -16,14 +16,14 @@ async function main() {
     console.log("💰 Sender balance:", hre.ethers.formatEther(balance), "USDC\n");
 
     // Get addresses
-    const PAYERX_ADDRESS = process.env.PAYERX_ADDRESS;
+    const WIZPAY_ADDRESS = process.env.WIZPAY_ADDRESS;
     const ADAPTER_ADDRESS = process.env.STABLEFX_ADAPTER_ADDRESS;
     const USDC = process.env.ARC_USDC;
     const EURC = process.env.ARC_EURC;
     const RECIPIENT = "0xef6582d8bd8c5e6f1ca37181b4b6284c945b3484";
 
     console.log("📍 Contract Addresses:");
-    console.log("   PayerX:", PAYERX_ADDRESS);
+    console.log("   WizPay:", WIZPAY_ADDRESS);
     console.log("   StableFXAdapter:", ADAPTER_ADDRESS);
     console.log("   USDC:", USDC);
     console.log("   EURC:", EURC);
@@ -31,7 +31,7 @@ async function main() {
     console.log();
 
     // Get contract instances
-    const payerx = await hre.ethers.getContractAt("PayerX", PAYERX_ADDRESS);
+    const wizpay = await hre.ethers.getContractAt("WizPay", WIZPAY_ADDRESS);
     const adapter = await hre.ethers.getContractAt("StableFXAdapter", ADAPTER_ADDRESS);
     const usdc = await hre.ethers.getContractAt("IERC20", USDC);
     const eurc = await hre.ethers.getContractAt("IERC20", EURC);
@@ -71,17 +71,17 @@ async function main() {
     console.log("📈 Expected Output:");
     console.log("   Before fees:", hre.ethers.formatUnits(expectedOutput, 6), "USDC");
     
-    // Calculate with PayerX fee (0.1%)
-    const feeBps = await payerx.feeBps();
+    // Calculate with WizPay fee (0.1%)
+    const feeBps = await wizpay.feeBps();
     const feeAmount = (expectedOutput * feeBps) / 10000n;
     const expectedAfterFee = expectedOutput - feeAmount;
-    console.log("   PayerX fee (0.1%):", hre.ethers.formatUnits(feeAmount, 6), "USDC");
+    console.log("   WizPay fee (0.1%):", hre.ethers.formatUnits(feeAmount, 6), "USDC");
     console.log("   After fees:", hre.ethers.formatUnits(expectedAfterFee, 6), "USDC");
     console.log();
 
-    // Approve EURC to PayerX
+    // Approve EURC to WizPay
     console.log("🔓 Approving EURC...");
-    let tx = await eurc.approve(PAYERX_ADDRESS, amountToSend);
+    let tx = await eurc.approve(WIZPAY_ADDRESS, amountToSend);
     await tx.wait();
     console.log("   ✓ Approval confirmed");
     console.log();
@@ -91,7 +91,7 @@ async function main() {
     const minAmountOut = (expectedAfterFee * 98n) / 100n; // 2% slippage tolerance
     console.log("   Min amount out:", hre.ethers.formatUnits(minAmountOut, 6), "USDC");
     
-    tx = await payerx.routeAndPay(
+    tx = await wizpay.routeAndPay(
         EURC,
         USDC,
         amountToSend,

@@ -4,12 +4,12 @@ import fs from 'fs';
 import path from 'path';
 
 /**
- * Script to test PayerX with minimal setup
+ * Script to test WizPay with minimal setup
  * Just verify contracts are deployed and callable
  */
 
 async function main() {
-  console.log("🧪 Testing PayerX Deployment...\n");
+  console.log("🧪 Testing WizPay Deployment...\n");
 
   // Get deployer
   const [deployer] = await ethers.getSigners();
@@ -25,31 +25,31 @@ async function main() {
   }
 
   const deploymentInfo = JSON.parse(fs.readFileSync(deploymentPath, 'utf8'));
-  const payerXAddress = deploymentInfo.contracts.PayerX;
+  const wizPayAddress = deploymentInfo.contracts.WizPay;
   const fxEngineAddress = deploymentInfo.contracts.MockFXEngine;
   
-  console.log("🎯 PayerX:", payerXAddress);
+  console.log("🎯 WizPay:", wizPayAddress);
   console.log("🎯 FXEngine:", fxEngineAddress, "\n");
 
   // Get contracts
-  const PayerX = await ethers.getContractFactory("PayerX");
-  const payerX = PayerX.attach(payerXAddress);
+  const WizPay = await ethers.getContractFactory("WizPay");
+  const wizPay = WizPay.attach(wizPayAddress);
   
   const MockFXEngine = await ethers.getContractFactory("MockFXEngine");
   const fxEngine = MockFXEngine.attach(fxEngineAddress);
 
-  // Check PayerX config
-  console.log("✅ PayerX Contract Information:");
+  // Check WizPay config
+  console.log("✅ WizPay Contract Information:");
   try {
-    const feeBps = await payerX.feeBps();
-    const feeCollector = await payerX.feeCollector();
-    const fxEngineAddr = await payerX.fxEngine();
+    const feeBps = await wizPay.feeBps();
+    const feeCollector = await wizPay.feeCollector();
+    const fxEngineAddr = await wizPay.fxEngine();
     
     console.log("   Fee:", feeBps.toString(), "bps");
     console.log("   Fee Collector:", feeCollector);
     console.log("   FX Engine:", fxEngineAddr);
   } catch (e) {
-    console.error("❌ Error reading PayerX:", e.message);
+    console.error("❌ Error reading WizPay:", e.message);
   }
 
   // Check FXEngine
@@ -74,7 +74,7 @@ async function main() {
   console.log("✅ Deployment Test Complete!");
   console.log("═══════════════════════════════════════════════");
   console.log("\n📋 Summary:");
-  console.log("   PayerX deployed:", payerXAddress);
+  console.log("   WizPay deployed:", wizPayAddress);
   console.log("   MockFXEngine deployed:", fxEngineAddress);
   console.log("   Both contracts callable ✓");
   console.log("\n📝 Next Steps:");
@@ -82,7 +82,7 @@ async function main() {
   console.log("   2. Fund MockFXEngine with tokens");
   console.log("   3. Test routeAndPay function");
   console.log("\n   Faucet: https://faucet.circle.com");
-  console.log("   Explorer: https://testnet.arcscan.app/address/" + payerXAddress);
+  console.log("   Explorer: https://testnet.arcscan.app/address/" + wizPayAddress);
   console.log("═══════════════════════════════════════════════\n");
 }
 

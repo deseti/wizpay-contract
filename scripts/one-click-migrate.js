@@ -53,13 +53,13 @@ async function main() {
         console.log("   ⚠️ Not enough EURC to fund");
     }
 
-    console.log("\n🔄 Migrating PayerX Router...");
-    const PAYERX_ADDRESS = "0x6E8B94dE557D7EB5C0628722511F0A0236a57214";
-    const payerx = await hre.ethers.getContractAt("PayerX", PAYERX_ADDRESS);
+    console.log("\n🔄 Migrating WizPay Router...");
+    const WIZPAY_ADDRESS = "0x6E8B94dE557D7EB5C0628722511F0A0236a57214";
+    const wizpay = await hre.ethers.getContractAt("WizPay", WIZPAY_ADDRESS);
     
-    const tx = await payerx.updateFXEngine(adapterAddress);
+    const tx = await wizpay.updateFXEngine(adapterAddress);
     await tx.wait();
-    console.log("✅ Successfully migrated PayerX to use real StableFXAdapter!");
+    console.log("✅ Successfully migrated WizPay to use real StableFXAdapter!");
 }
 
 main().catch(console.error);

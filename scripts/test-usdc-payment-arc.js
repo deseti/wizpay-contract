@@ -13,11 +13,11 @@ async function main() {
 
     const [deployer] = await hre.ethers.getSigners();
 
-    const PAYERX_ADDRESS = process.env.PAYERX_ADDRESS;
+    const WIZPAY_ADDRESS = process.env.WIZPAY_ADDRESS;
     const USDC = process.env.ARC_USDC;
 
     console.log("Account: " + deployer.address);
-    console.log("PayerX: " + PAYERX_ADDRESS);
+    console.log("WizPay: " + WIZPAY_ADDRESS);
     console.log();
 
     // ============================================================
@@ -45,17 +45,17 @@ async function main() {
     }
 
     // ============================================================
-    // Step 2: Approve USDC to PayerX
+    // Step 2: Approve USDC to WizPay
     // ============================================================
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("Step 2: Approve USDC to PayerX");
+    console.log("Step 2: Approve USDC to WizPay");
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log();
 
     try {
-        // Approve PayerX to spend all balance
+        // Approve WizPay to spend all balance
         console.log("Approving USDC...");
-        const approveTx = await usdc.approve(PAYERX_ADDRESS, balance);
+        const approveTx = await usdc.approve(WIZPAY_ADDRESS, balance);
         const approveReceipt = await approveTx.wait();
 
         console.log("✅ Approved");
@@ -78,10 +78,10 @@ async function main() {
     console.log();
 
     try {
-        const payerxABI = [
+        const wizpayABI = [
             "function routeAndPay(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut, address recipient) external"
         ];
-        const payerx = new hre.ethers.Contract(PAYERX_ADDRESS, payerxABI, deployer);
+        const wizpay = new hre.ethers.Contract(WIZPAY_ADDRESS, wizpayABI, deployer);
 
         // Send 50% of balance (to test payment)
         const paymentAmount = balance / 2n;
@@ -95,7 +95,7 @@ async function main() {
         console.log();
 
         console.log("Executing payment...");
-        const paymentTx = await payerx.routeAndPay(
+        const paymentTx = await wizpay.routeAndPay(
             USDC,           // tokenIn
             USDC,           // tokenOut (same)
             paymentAmount,  // amountIn
@@ -116,7 +116,7 @@ async function main() {
         console.log("║  ✅ SUCCESS - USDC → USDC Payment on Real ARC Testnet         ║");
         console.log("║                                                                ║");
         console.log("║  This confirms:                                                ║");
-        console.log("║  • PayerX contract is working                                  ║");
+        console.log("║  • WizPay contract is working                                  ║");
         console.log("║  • Payment routing functions                                   ║");
         console.log("║  • Token approval and transfer working                         ║");
         console.log("║  • Non-custodial flow confirmed                                ║");

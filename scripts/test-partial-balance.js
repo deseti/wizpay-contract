@@ -17,7 +17,7 @@ async function main() {
     console.log();
 
     // Get addresses
-    const PAYERX_ADDRESS = process.env.PAYERX_ADDRESS;
+    const WIZPAY_ADDRESS = process.env.WIZPAY_ADDRESS;
     const ADAPTER_ADDRESS = process.env.STABLEFX_ADAPTER_ADDRESS;
     const EURC = process.env.ARC_EURC;
     const USDC = process.env.ARC_USDC;
@@ -115,27 +115,27 @@ async function main() {
         console.log("   Remaining EURC after: 80%");
         console.log();
 
-        // Approve PayerX
+        // Approve WizPay
         const eurcApproveABI = ["function approve(address spender, uint256 amount) external returns (bool)"];
         const eurcApprove = new hre.ethers.Contract(EURC, eurcApproveABI, deployer);
 
-        console.log("Approving PayerX...");
-        const approveTx = await eurcApprove.approve(PAYERX_ADDRESS, paymentAmount);
+        console.log("Approving WizPay...");
+        const approveTx = await eurcApprove.approve(WIZPAY_ADDRESS, paymentAmount);
         const approveReceipt = await approveTx.wait();
         console.log("✅ Approved");
         console.log("   Tx:", approveTx.hash);
         console.log();
 
         // Execute payment
-        const payerxABI = [
+        const wizpayABI = [
             "function routeAndPay(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut, address recipient) external"
         ];
-        const payerx = new hre.ethers.Contract(PAYERX_ADDRESS, payerxABI, deployer);
+        const wizpay = new hre.ethers.Contract(WIZPAY_ADDRESS, wizpayABI, deployer);
 
         const minOutput = hre.ethers.parseUnits((expectedOutput * 0.985).toFixed(2), 18);
 
         console.log("Executing payment...");
-        const paymentTx = await payerx.routeAndPay(
+        const paymentTx = await wizpay.routeAndPay(
             EURC,
             USDC,
             paymentAmount,

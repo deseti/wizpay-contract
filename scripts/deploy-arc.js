@@ -2,7 +2,7 @@ import hre from "hardhat";
 const { ethers } = hre;
 
 /**
- * Deployment script for PayerX on ARC Testnet
+ * Deployment script for WizPay on ARC Testnet
  * 
  * Usage:
  * 1. Setup .env file with PRIVATE_KEY
@@ -20,7 +20,7 @@ const ARC_CONTRACTS = {
 };
 
 async function main() {
-  console.log("🚀 Deploying PayerX to ARC Testnet...\n");
+  console.log("🚀 Deploying WizPay to ARC Testnet...\n");
 
   // Get deployer account
   const [deployer] = await ethers.getSigners();
@@ -50,26 +50,26 @@ async function main() {
   await mockFxEngine.setExchangeRate(ARC_CONTRACTS.EURC, ARC_CONTRACTS.USDC, rate);
   console.log("✅ Exchange rate set: 1 EURC = 1.1 USDC\n");
 
-  // Step 2: Deploy PayerX
-  console.log("📦 Deploying PayerX...");
+  // Step 2: Deploy WizPay
+  console.log("📦 Deploying WizPay...");
   const feeBps = process.env.FEE_BPS || 10; // 0.1% default fee
   const feeCollector = process.env.FEE_COLLECTOR || deployer.address;
 
-  const PayerX = await ethers.getContractFactory("PayerX");
-  const payerX = await PayerX.deploy(
+  const WizPay = await ethers.getContractFactory("WizPay");
+  const wizPay = await WizPay.deploy(
     fxEngineAddress,
     feeCollector,
     feeBps
   );
-  await payerX.waitForDeployment();
-  const payerXAddress = await payerX.getAddress();
-  console.log("✅ PayerX deployed to:", payerXAddress);
+  await wizPay.waitForDeployment();
+  const wizPayAddress = await wizPay.getAddress();
+  console.log("✅ WizPay deployed to:", wizPayAddress);
   console.log("   Fee: ", feeBps, "bps (", (feeBps / 100).toFixed(2), "%)");
   console.log("   Fee Collector:", feeCollector, "\n");
 
   // Step 3: Configure whitelist (optional)
   console.log("⚙️  Configuring token whitelist...");
-  await payerX.batchSetTokenWhitelist(
+  await wizPay.batchSetTokenWhitelist(
     [ARC_CONTRACTS.USDC, ARC_CONTRACTS.EURC, ARC_CONTRACTS.USYC],
     true
   );
@@ -92,13 +92,13 @@ async function main() {
   console.log("🎉 Deployment Complete!");
   console.log("═══════════════════════════════════════════════");
   console.log("📍 Contract Addresses:");
-  console.log("   PayerX:        ", payerXAddress);
+  console.log("   WizPay:        ", wizPayAddress);
   // Summary
   console.log("═══════════════════════════════════════════════");
   console.log("🎉 Deployment Complete!");
   console.log("═══════════════════════════════════════════════");
   console.log("📍 Contract Addresses:");
-  console.log("   PayerX:        ", payerXAddress);
+  console.log("   WizPay:        ", wizPayAddress);
   console.log("   MockFXEngine:  ", fxEngineAddress);
   console.log("\n🪙  ARC Testnet Tokens (REAL, not mock):");
   console.log("   USDC:          ", ARC_CONTRACTS.USDC);
@@ -114,7 +114,7 @@ async function main() {
     timestamp: new Date().toISOString(),
     deployer: deployer.address,
     contracts: {
-      PayerX: payerXAddress,
+      WizPay: wizPayAddress,
       MockFXEngine: fxEngineAddress,
       RealUSDC: ARC_CONTRACTS.USDC,
       RealEURC: ARC_CONTRACTS.EURC,

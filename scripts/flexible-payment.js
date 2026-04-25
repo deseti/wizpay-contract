@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 /**
- * Flexible PayerX Payment Script
+ * Flexible WizPay Payment Script
  * Send any amount of EURC → USDC to recipient address
  * 
  * IMPORTANT: Adapter Liquidity Constraint
@@ -21,7 +21,7 @@ dotenv.config();
 async function main() {
     const [deployer] = await hre.ethers.getSigners();
 
-    const PAYERX_ADDRESS = process.env.PAYERX_ADDRESS;
+    const WIZPAY_ADDRESS = process.env.WIZPAY_ADDRESS;
     const ADAPTER_ADDRESS = process.env.STABLEFX_ADAPTER_ADDRESS;
     const EURC = process.env.ARC_EURC;
     const USDC = process.env.ARC_USDC;
@@ -43,7 +43,7 @@ async function main() {
     // ============================================================
 
     console.log("╔════════════════════════════════════════════════════════════════╗");
-    console.log("║  PayerX Flexible Payment Router                               ║");
+    console.log("║  WizPay Flexible Payment Router                               ║");
     console.log("║  Send " + AMOUNT_EURC + " EURC → USDC                                        ║");
     console.log("╚════════════════════════════════════════════════════════════════╝\n");
 
@@ -148,7 +148,7 @@ async function main() {
     // Step 4: Approve Tokens
     // ============================================================
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("Step 4: Approve " + AMOUNT_EURC + " EURC to PayerX");
+    console.log("Step 4: Approve " + AMOUNT_EURC + " EURC to WizPay");
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log();
 
@@ -159,7 +159,7 @@ async function main() {
         const approveAmount = hre.ethers.parseUnits(AMOUNT_EURC, 6);
         console.log("Approving " + AMOUNT_EURC + " EURC...");
 
-        const approveTx = await eurc.approve(PAYERX_ADDRESS, approveAmount);
+        const approveTx = await eurc.approve(WIZPAY_ADDRESS, approveAmount);
         await approveTx.wait();
 
         console.log("✅ Approved");
@@ -181,10 +181,10 @@ async function main() {
     console.log();
 
     try {
-        const payerxABI = [
+        const wizpayABI = [
             "function routeAndPay(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut, address recipient) external"
         ];
-        const payerx = new hre.ethers.Contract(PAYERX_ADDRESS, payerxABI, deployer);
+        const wizpay = new hre.ethers.Contract(WIZPAY_ADDRESS, wizpayABI, deployer);
 
         const amountIn = hre.ethers.parseUnits(AMOUNT_EURC, 6);
         const minOut = 0n; // Let adapter handle slippage
@@ -199,7 +199,7 @@ async function main() {
         console.log();
 
         console.log("Executing payment on real ARC Testnet...");
-        const paymentTx = await payerx.routeAndPay(
+        const paymentTx = await wizpay.routeAndPay(
             EURC,                   // tokenIn
             USDC,                   // tokenOut
             amountIn,               // amount

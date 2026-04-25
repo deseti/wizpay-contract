@@ -1,4 +1,4 @@
-# ✅ COMPLETE TEST REPORT - PayerX StableFX Integration
+# ✅ COMPLETE TEST REPORT - WizPay StableFX Integration
 **Date**: December 7, 2025  
 **Network**: ARC Testnet  
 **Status**: ✅ **ALL TESTS PASSED - PRODUCTION READY**
@@ -68,9 +68,9 @@ Result: ✅ Sufficient liquidity available
 **Status**: ✅ **WORKING**
 
 ```
-✅ EURC Approved for PayerX
+✅ EURC Approved for WizPay
 Token: EURC (0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a)
-Spender: PayerX (0x570b3d069b3350C54Ec5E78E8b2c2677ddb38C0C)
+Spender: WizPay (0x570b3d069b3350C54Ec5E78E8b2c2677ddb38C0C)
 Amount: 1 EURC (1,000,000 wei at 6 decimals)
 Block: 3
 Transaction: 0x957c3070fe2b0035e840e8ee559491d67b4e6b87fad1d79ff9a8cc1245ad921f
@@ -79,7 +79,7 @@ Result: ✅ Approved
 
 **What Happened**:
 - Requested approval for 1 EURC
-- PayerX contract now authorized to spend EURC
+- WizPay contract now authorized to spend EURC
 - Approval confirmed on-chain
 
 ---
@@ -101,7 +101,7 @@ Result: ✅ SUCCESS
 ```
 
 **What Happened**:
-- PayerX received 1 EURC from user
+- WizPay received 1 EURC from user
 - Router queried real exchange rate (1.16)
 - StableFXAdapter executed swap
 - User received ~1.16 USDC
@@ -147,12 +147,12 @@ await usdc.transfer(ADAPTER_ADDRESS, ethers.parseUnits('50', 18));
 ### ✅ Token Flow
 ```javascript
 // Non-custodial: Tokens flow directly
-User → approve EURC to PayerX
+User → approve EURC to WizPay
 User → call routeAndPay()
-PayerX → transfer EURC to Adapter
+WizPay → transfer EURC to Adapter
 Adapter → execute swap
 Adapter → transfer USDC to User
-// No funds held in PayerX contract
+// No funds held in WizPay contract
 ```
 
 ---
@@ -202,7 +202,7 @@ Block 2: Liquidity Funding
   - ✅ Confirmed
 
 Block 3: Token Approval
-  - Approved 1 EURC to PayerX
+  - Approved 1 EURC to WizPay
   - ✅ Confirmed
 
 Block 4: Payment Execution

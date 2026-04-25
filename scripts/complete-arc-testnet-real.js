@@ -16,7 +16,7 @@ async function main() {
 
     const [deployer] = await hre.ethers.getSigners();
 
-    const PAYERX_ADDRESS = process.env.PAYERX_ADDRESS;
+    const WIZPAY_ADDRESS = process.env.WIZPAY_ADDRESS;
     const ADAPTER_ADDRESS = process.env.STABLEFX_ADAPTER_ADDRESS;
     const EURC = process.env.ARC_EURC;
     const USDC = process.env.ARC_USDC;
@@ -67,7 +67,7 @@ async function main() {
     // Step 2: Approve EURC
     // ============================================================
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("Step 2: Approve EURC for PayerX");
+    console.log("Step 2: Approve EURC for WizPay");
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log();
 
@@ -77,7 +77,7 @@ async function main() {
 
         const approveAmount = hre.ethers.parseUnits("1", 6);
         console.log("Approving 1 EURC...");
-        const approveTx = await eurc.approve(PAYERX_ADDRESS, approveAmount);
+        const approveTx = await eurc.approve(WIZPAY_ADDRESS, approveAmount);
 
         console.log("Waiting for confirmation...");
         const approveReceipt = await approveTx.wait();
@@ -107,10 +107,10 @@ async function main() {
         const data = await response.json();
         const rate = data.rates.USD;
 
-        const payerxABI = [
+        const wizpayABI = [
             "function routeAndPay(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut, address recipient) external"
         ];
-        const payerx = new hre.ethers.Contract(PAYERX_ADDRESS, payerxABI, deployer);
+        const wizpay = new hre.ethers.Contract(WIZPAY_ADDRESS, wizpayABI, deployer);
 
         const amountIn = hre.ethers.parseUnits("1", 6);
         // Set minAmountOut to 0 to allow adapter's internal slippage tolerance
@@ -123,7 +123,7 @@ async function main() {
         console.log();
 
         console.log("Executing payment on ARC...");
-        const paymentTx = await payerx.routeAndPay(
+        const paymentTx = await wizpay.routeAndPay(
             EURC,
             USDC,
             amountIn,

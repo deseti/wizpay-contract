@@ -22,7 +22,7 @@ async function main() {
     // Show usage if missing params
     if (!fromTokenSymbol || !toTokenSymbol || !amount || !recipientAddress) {
         console.log("╔════════════════════════════════════════════════════════════════╗");
-        console.log("║  PayerX Universal Payment Router                              ║");
+        console.log("║  WizPay Universal Payment Router                              ║");
         console.log("║  Send ANY token → ANY token                                    ║");
         console.log("╚════════════════════════════════════════════════════════════════╝\n");
         console.log("Usage (PowerShell):");
@@ -50,7 +50,7 @@ async function main() {
         USDC: process.env.ARC_USDC
     };
 
-    const PAYERX_ADDRESS = process.env.PAYERX_ADDRESS;
+    const WIZPAY_ADDRESS = process.env.WIZPAY_ADDRESS;
     const ADAPTER_ADDRESS = process.env.STABLEFX_ADAPTER_ADDRESS;
 
     // Validate tokens
@@ -64,7 +64,7 @@ async function main() {
     const isSameToken = fromToken.toLowerCase() === toToken.toLowerCase();
 
     console.log("╔════════════════════════════════════════════════════════════════╗");
-    console.log("║  PayerX Universal Payment Router                              ║");
+    console.log("║  WizPay Universal Payment Router                              ║");
     console.log("║  " + fromTokenSymbol + " → " + toTokenSymbol + " Payment                                              ║");
     console.log("╚════════════════════════════════════════════════════════════════╝\n");
 
@@ -222,7 +222,7 @@ async function main() {
     // Step 5: Approve Tokens
     // ============================================================
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("Step 4: Approve " + amount + " " + fromTokenSymbol + " to PayerX");
+    console.log("Step 4: Approve " + amount + " " + fromTokenSymbol + " to WizPay");
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log();
 
@@ -232,7 +232,7 @@ async function main() {
         const approveAmount = hre.ethers.parseUnits(amount, decimals);
 
         console.log("Approving " + amount + " " + fromTokenSymbol + "...");
-        const approveTx = await fromTokenContract.approve(PAYERX_ADDRESS, approveAmount);
+        const approveTx = await fromTokenContract.approve(WIZPAY_ADDRESS, approveAmount);
         await approveTx.wait();
 
         console.log("✅ Approved");
@@ -246,7 +246,7 @@ async function main() {
     }
 
     // ============================================================
-    // Step 6: Execute Payment via PayerX
+    // Step 6: Execute Payment via WizPay
     // ============================================================
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log("Step 5: Execute Swap Payment");
@@ -254,10 +254,10 @@ async function main() {
     console.log();
 
     try {
-        const payerxABI = [
+        const wizpayABI = [
             "function routeAndPay(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut, address recipient) external"
         ];
-        const payerx = new hre.ethers.Contract(PAYERX_ADDRESS, payerxABI, deployer);
+        const wizpay = new hre.ethers.Contract(WIZPAY_ADDRESS, wizpayABI, deployer);
 
         const fromTokenContract = new hre.ethers.Contract(fromToken, tokenABI, hre.ethers.provider);
         const decimals = await fromTokenContract.decimals();
@@ -275,7 +275,7 @@ async function main() {
         console.log();
 
         console.log("Executing payment on real ARC Testnet...");
-        const paymentTx = await payerx.routeAndPay(
+        const paymentTx = await wizpay.routeAndPay(
             fromToken,
             toToken,
             amountIn,

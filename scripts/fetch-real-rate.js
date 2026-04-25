@@ -5,7 +5,7 @@ dotenv.config();
 
 /**
  * Fetch real-time EUR/USD exchange rate from multiple sources
- * This provides a real market rate for PayerX payment system
+ * This provides a real market rate for WizPay payment system
  */
 
 async function fetchEURUSDRate() {

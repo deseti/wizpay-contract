@@ -8,7 +8,7 @@ import "./IFXEngine.sol";
 
 /**
  * @title StableFXAdapter (SFX-LP)
- * @dev Decentralized Adapter contract bridging PayerX with cross-stablecoin liquidity
+ * @dev Decentralized Adapter contract bridging WizPay with cross-stablecoin liquidity
  * 
  * Features:
  * - Unified Liquidity Pool (ERC20 Token Vault model)

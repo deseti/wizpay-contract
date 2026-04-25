@@ -6,8 +6,8 @@ async function main() {
     process.env.FORCE_COLOR = '0';
     
     let envText = fs.readFileSync('.env', 'utf8');
-    if (!envText.includes('PAYERX_ADDRESS')) {
-        envText += '\nPAYERX_ADDRESS=0x6E8B94dE557D7EB5C0628722511F0A0236a57214\n';
+    if (!envText.includes('WIZPAY_ADDRESS')) {
+        envText += '\nWIZPAY_ADDRESS=0x6E8B94dE557D7EB5C0628722511F0A0236a57214\n';
     }
     if (!envText.includes('MOCKFXENGINE_ADDRESS')) {
         envText += 'MOCKFXENGINE_ADDRESS=0xF939f0A6c20c90f4a4f1Af704E51300c0bEA68eA\n';
@@ -37,7 +37,7 @@ async function main() {
         console.log("\n2️⃣  Funding the Adapter with 50% available Liquidity...");
         execSync("npx hardhat run scripts/fund-adapter.js --network arc-testnet", { stdio: 'inherit', env: process.env });
         
-        console.log("\n3️⃣  Migrating PayerX to REAL StableFXAdapter...");
+        console.log("\n3️⃣  Migrating WizPay to REAL StableFXAdapter...");
         execSync("npx hardhat run scripts/migrate-to-stablefx.js --network arc-testnet", { stdio: 'inherit', env: process.env });
         
         console.log("\n🎉 ALL DONE! Migration to REAL infrastructure is complete.");

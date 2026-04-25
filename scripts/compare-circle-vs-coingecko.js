@@ -16,7 +16,7 @@ const CIRCLE_API_BASE_URL = 'https://api-sandbox.circle.com';
  * - Permit2 approvals
  * - On-chain transaction execution
  * 
- * For PayerX rate updates, CoinGecko is MUCH simpler!
+ * For WizPay rate updates, CoinGecko is MUCH simpler!
  */
 
 async function getCircleStableFXRate() {
@@ -104,7 +104,7 @@ async function getCircleStableFXRate() {
     console.log('   - Requires Permit2 approvals');
     console.log('   - Requires on-chain execution');
     console.log('');
-    console.log('💡 For PayerX rate updates, CoinGecko is MUCH simpler!');
+    console.log('💡 For WizPay rate updates, CoinGecko is MUCH simpler!');
     
     return quote.rate;
     
@@ -148,7 +148,7 @@ async function compare() {
   
   console.log('');
   console.log('=' .repeat(60));
-  console.log('CONCLUSION: CoinGecko is MUCH better for PayerX use case');
+  console.log('CONCLUSION: CoinGecko is MUCH better for WizPay use case');
   console.log('=' .repeat(60));
 }
 

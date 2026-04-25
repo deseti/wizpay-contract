@@ -17,13 +17,13 @@ async function main() {
     console.log();
 
     // Addresses
-    const PAYERX_ADDRESS = process.env.PAYERX_ADDRESS;
+    const WIZPAY_ADDRESS = process.env.WIZPAY_ADDRESS;
     const ADAPTER_ADDRESS = process.env.STABLEFX_ADAPTER_ADDRESS;
     const EURC = process.env.ARC_EURC;
     const USDC = process.env.ARC_USDC;
 
     console.log("📍 Addresses:");
-    console.log("   PayerX:", PAYERX_ADDRESS);
+    console.log("   WizPay:", WIZPAY_ADDRESS);
     console.log("   Adapter:", ADAPTER_ADDRESS);
     console.log("   EURC:", EURC);
     console.log("   USDC:", USDC);
@@ -107,7 +107,7 @@ async function main() {
     console.log();
 
     try {
-        const payerxABI = [
+        const wizpayABI = [
             "function routeAndPay(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut, address recipient) external"
         ];
         
@@ -115,7 +115,7 @@ async function main() {
             "function approve(address spender, uint256 amount) external returns (bool)"
         ];
 
-        const payerx = new hre.ethers.Contract(PAYERX_ADDRESS, payerxABI, deployer);
+        const wizpay = new hre.ethers.Contract(WIZPAY_ADDRESS, wizpayABI, deployer);
         const eurc = new hre.ethers.Contract(EURC, eurcABI, deployer);
 
         // Payment amounts
@@ -131,8 +131,8 @@ async function main() {
         console.log();
 
         // Approve EURC
-        console.log("Step 3a: Approving EURC for PayerX...");
-        const approveTx = await eurc.approve(PAYERX_ADDRESS, paymentAmount);
+        console.log("Step 3a: Approving EURC for WizPay...");
+        const approveTx = await eurc.approve(WIZPAY_ADDRESS, paymentAmount);
         const approveReceipt = await approveTx.wait();
         console.log("✅ Approved");
         console.log("   Block:", approveReceipt.blockNumber);
@@ -140,8 +140,8 @@ async function main() {
         console.log();
 
         // Execute payment
-        console.log("Step 3b: Executing payment via PayerX.routeAndPay()...");
-        const paymentTx = await payerx.routeAndPay(
+        console.log("Step 3b: Executing payment via WizPay.routeAndPay()...");
+        const paymentTx = await wizpay.routeAndPay(
             EURC,
             USDC,
             paymentAmount,
@@ -176,7 +176,7 @@ async function main() {
         console.log("   • Real EUR/USD rate from official API: " + realRate.toFixed(4));
         console.log("   • On-chain rate update (StableFXAdapter)");
         console.log("   • Liquidity funding to adapter");
-        console.log("   • Token approval (EURC to PayerX)");
+        console.log("   • Token approval (EURC to WizPay)");
         console.log("   • Payment routing with real rates");
         console.log();
         console.log("📝 Integration Status:");

@@ -27,13 +27,13 @@ async function main() {
     console.log();
 
     // Get addresses from .env
-    const PAYERX_ADDRESS = process.env.PAYERX_ADDRESS;
+    const WIZPAY_ADDRESS = process.env.WIZPAY_ADDRESS;
     const ADAPTER_ADDRESS = process.env.STABLEFX_ADAPTER_ADDRESS;
     const EURC = process.env.ARC_EURC;
     const USDC = process.env.ARC_USDC;
 
     console.log("Contract Addresses:");
-    console.log("  PayerX:", PAYERX_ADDRESS);
+    console.log("  WizPay:", WIZPAY_ADDRESS);
     console.log("  Adapter:", ADAPTER_ADDRESS);
     console.log("  EURC:", EURC);
     console.log("  USDC:", USDC);
@@ -102,12 +102,12 @@ async function main() {
         console.log("  Expected output: ~" + expectedOutput.toFixed(4) + " USDC");
         console.log();
 
-        // Approve PayerX
+        // Approve WizPay
         const eurcApproveABI = ["function approve(address spender, uint256 amount) external returns (bool)"];
         const eurcApprove = new hre.ethers.Contract(EURC, eurcApproveABI, deployer);
 
         console.log("Step 2a: Approving EURC...");
-        const approveTx = await eurcApprove.approve(PAYERX_ADDRESS, paymentAmount);
+        const approveTx = await eurcApprove.approve(WIZPAY_ADDRESS, paymentAmount);
         const approveReceipt = await approveTx.wait();
 
         console.log("✅ Approved");
@@ -115,15 +115,15 @@ async function main() {
         console.log();
 
         // Execute payment
-        const payerxABI = [
+        const wizpayABI = [
             "function routeAndPay(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut, address recipient) external"
         ];
-        const payerx = new hre.ethers.Contract(PAYERX_ADDRESS, payerxABI, deployer);
+        const wizpay = new hre.ethers.Contract(WIZPAY_ADDRESS, wizpayABI, deployer);
 
         const minOutput = hre.ethers.parseUnits((expectedOutput * 0.985).toFixed(2), 18);
 
         console.log("Step 2b: Executing payment...");
-        const paymentTx = await payerx.routeAndPay(
+        const paymentTx = await wizpay.routeAndPay(
             EURC,
             USDC,
             paymentAmount,

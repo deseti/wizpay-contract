@@ -16,14 +16,14 @@ async function main() {
     console.log();
 
     // Addresses
-    const PAYERX_ADDRESS = process.env.PAYERX_ADDRESS;
+    const WIZPAY_ADDRESS = process.env.WIZPAY_ADDRESS;
     const ADAPTER_ADDRESS = process.env.STABLEFX_ADAPTER_ADDRESS;
     const EURC = process.env.ARC_EURC;
     const USDC = process.env.ARC_USDC;
     const USER_WALLET = "0x75b0b8EFb946e2892Bc650311D28DEFfbe015Ea9";
 
     console.log("📍 Addresses:");
-    console.log("   PayerX:", PAYERX_ADDRESS);
+    console.log("   WizPay:", WIZPAY_ADDRESS);
     console.log("   Adapter:", ADAPTER_ADDRESS);
     console.log("   EURC:", EURC);
     console.log("   USDC:", USDC);
@@ -123,7 +123,7 @@ async function main() {
         console.log();
 
         // ABIs
-        const payerxABI = [
+        const wizpayABI = [
             "function routeAndPay(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut, address recipient) external"
         ];
         
@@ -132,7 +132,7 @@ async function main() {
         ];
 
         // Get contract instances with user signer
-        const payerx = new hre.ethers.Contract(PAYERX_ADDRESS, payerxABI, userSigner);
+        const wizpay = new hre.ethers.Contract(WIZPAY_ADDRESS, wizpayABI, userSigner);
         const eurc = new hre.ethers.Contract(EURC, eurcABI, userSigner);
 
         // Payment parameters
@@ -147,15 +147,15 @@ async function main() {
 
         // Step 1: Approve EURC
         console.log("Step 3a: Approving EURC...");
-        const approveTx = await eurc.approve(PAYERX_ADDRESS, paymentAmount);
+        const approveTx = await eurc.approve(WIZPAY_ADDRESS, paymentAmount);
         const approveReceipt = await approveTx.wait();
         console.log("✅ Approved at block", approveReceipt.blockNumber);
         console.log("   Tx:", approveTx.hash);
         console.log();
 
         // Step 2: Execute payment
-        console.log("Step 3b: Executing payment via PayerX...");
-        const paymentTx = await payerx.routeAndPay(
+        console.log("Step 3b: Executing payment via WizPay...");
+        const paymentTx = await wizpay.routeAndPay(
             EURC,
             USDC,
             paymentAmount,

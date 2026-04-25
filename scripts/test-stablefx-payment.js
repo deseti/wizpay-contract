@@ -7,7 +7,7 @@ dotenv.config();
  * Compare with old MockFXEngine results
  */
 async function main() {
-    console.log("🧪 Testing PayerX with Real Market Rates (StableFXAdapter)...\n");
+    console.log("🧪 Testing WizPay with Real Market Rates (StableFXAdapter)...\n");
 
     const [sender] = await hre.ethers.getSigners();
     console.log("📝 Testing with account:", sender.address);
@@ -16,19 +16,19 @@ async function main() {
     console.log("💰 Account balance:", hre.ethers.formatEther(balance), "USDC\n");
 
     // Get addresses from .env
-    const PAYERX_ADDRESS = process.env.PAYERX_ADDRESS;
+    const WIZPAY_ADDRESS = process.env.WIZPAY_ADDRESS;
     const ADAPTER_ADDRESS = process.env.STABLEFX_ADAPTER_ADDRESS;
     const USDC = process.env.ARC_USDC;
     const EURC = process.env.ARC_EURC;
     const RECIPIENT = process.env.RECIPIENT || sender.address;
 
-    if (!PAYERX_ADDRESS || !ADAPTER_ADDRESS) {
+    if (!WIZPAY_ADDRESS || !ADAPTER_ADDRESS) {
         console.error("❌ Missing required addresses in .env");
         process.exit(1);
     }
 
     console.log("📍 Contract Addresses:");
-    console.log("   PayerX:", PAYERX_ADDRESS);
+    console.log("   WizPay:", WIZPAY_ADDRESS);
     console.log("   StableFXAdapter:", ADAPTER_ADDRESS);
     console.log("   USDC:", USDC);
     console.log("   EURC:", EURC);
@@ -36,22 +36,22 @@ async function main() {
     console.log();
 
     // Get contract instances
-    const payerx = await hre.ethers.getContractAt("PayerX", PAYERX_ADDRESS);
+    const wizpay = await hre.ethers.getContractAt("WizPay", WIZPAY_ADDRESS);
     const adapter = await hre.ethers.getContractAt("StableFXAdapter", ADAPTER_ADDRESS);
     const usdc = await hre.ethers.getContractAt("IERC20", USDC);
     const eurc = await hre.ethers.getContractAt("IERC20", EURC);
 
-    // Verify PayerX is using StableFXAdapter
+    // Verify WizPay is using StableFXAdapter
     try {
-        const currentFXEngine = await payerx.fxEngine();
+        const currentFXEngine = await wizpay.fxEngine();
         if (currentFXEngine.toLowerCase() !== ADAPTER_ADDRESS.toLowerCase()) {
-            console.error("❌ PayerX is not using StableFXAdapter!");
+            console.error("❌ WizPay is not using StableFXAdapter!");
             console.error("   Current FXEngine:", currentFXEngine);
             console.error("   Expected:", ADAPTER_ADDRESS);
             console.log("\n   Run migration first: node scripts/migrate-to-stablefx.js");
             process.exit(1);
         }
-        console.log("✅ PayerX is using StableFXAdapter\n");
+        console.log("✅ WizPay is using StableFXAdapter\n");
     } catch (error) {
         console.log("⚠️  Could not verify FX Engine (skipping check)");
         console.log(`   Assuming adapter is at: ${ADAPTER_ADDRESS}\n`);
@@ -100,17 +100,17 @@ async function main() {
     console.log("📈 Expected Output:");
     console.log("   Before fees:", hre.ethers.formatUnits(expectedOutput, 6), "USDC");
     
-    // Calculate with PayerX fee (0.1%)
-    const feeBps = await payerx.feeBps();
+    // Calculate with WizPay fee (0.1%)
+    const feeBps = await wizpay.feeBps();
     const feeAmount = (expectedOutput * feeBps) / 10000n;
     const expectedAfterFee = expectedOutput - feeAmount;
-    console.log("   PayerX fee (0.1%):", hre.ethers.formatUnits(feeAmount, 6), "USDC");
+    console.log("   WizPay fee (0.1%):", hre.ethers.formatUnits(feeAmount, 6), "USDC");
     console.log("   After fees:", hre.ethers.formatUnits(expectedAfterFee, 6), "USDC");
     console.log();
 
-    // Approve EURC to PayerX
+    // Approve EURC to WizPay
     console.log("🔓 Approving EURC...");
-    let tx = await eurc.approve(PAYERX_ADDRESS, amountToSend);
+    let tx = await eurc.approve(WIZPAY_ADDRESS, amountToSend);
     await tx.wait();
     console.log("   ✓ Approval confirmed");
     console.log();
@@ -127,7 +127,7 @@ async function main() {
     console.log("     minAmountOut:", typeof minAmountOut, minAmountOut.toString());
     console.log("     RECIPIENT:", typeof RECIPIENT, RECIPIENT);
     
-    tx = await payerx.routeAndPay(
+    tx = await wizpay.routeAndPay(
         EURC,
         USDC,
         amountToSend,

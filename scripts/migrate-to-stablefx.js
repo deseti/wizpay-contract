@@ -3,11 +3,11 @@ import dotenv from "dotenv";
 dotenv.config();
 
 /**
- * Migrate PayerX to use StableFXAdapter
- * This updates the FXEngine address in PayerX to point to the new adapter
+ * Migrate WizPay to use StableFXAdapter
+ * This updates the FXEngine address in WizPay to point to the new adapter
  */
 async function main() {
-    console.log("🔄 Migrating PayerX to StableFXAdapter...\n");
+    console.log("🔄 Migrating WizPay to StableFXAdapter...\n");
 
     const [deployer] = await hre.ethers.getSigners();
     console.log("📝 Migrating with account:", deployer.address);
@@ -16,12 +16,12 @@ async function main() {
     console.log("💰 Account balance:", hre.ethers.formatEther(balance), "USDC\n");
 
     // Get addresses from .env
-    const PAYERX_ADDRESS = process.env.PAYERX_ADDRESS;
+    const WIZPAY_ADDRESS = process.env.WIZPAY_ADDRESS;
     const OLD_FXENGINE_ADDRESS = process.env.MOCKFXENGINE_ADDRESS; // MockFXEngine
     const NEW_FXENGINE_ADDRESS = process.env.STABLEFX_ADAPTER_ADDRESS;
 
-    if (!PAYERX_ADDRESS) {
-        console.error("❌ PAYERX_ADDRESS not found in .env");
+    if (!WIZPAY_ADDRESS) {
+        console.error("❌ WIZPAY_ADDRESS not found in .env");
         process.exit(1);
     }
 
@@ -32,33 +32,33 @@ async function main() {
     }
 
     console.log("📍 Contract Addresses:");
-    console.log("   PayerX:", PAYERX_ADDRESS);
+    console.log("   WizPay:", WIZPAY_ADDRESS);
     console.log("   Old FXEngine (Mock):", OLD_FXENGINE_ADDRESS);
     console.log("   New FXEngine (StableFX):", NEW_FXENGINE_ADDRESS);
     console.log();
 
-    // Get PayerX contract
-    const payerx = await hre.ethers.getContractAt("PayerX", PAYERX_ADDRESS);
+    // Get WizPay contract
+    const wizpay = await hre.ethers.getContractAt("WizPay", WIZPAY_ADDRESS);
 
     // Check current FXEngine
-    const currentFXEngine = await payerx.fxEngine();
+    const currentFXEngine = await wizpay.fxEngine();
     console.log("🔍 Current FXEngine:", currentFXEngine);
     console.log();
 
     // Check if already updated
     if (currentFXEngine.toLowerCase() === NEW_FXENGINE_ADDRESS.toLowerCase()) {
-        console.log("✅ PayerX is already using StableFXAdapter!");
+        console.log("✅ WizPay is already using StableFXAdapter!");
         console.log("   No migration needed.");
         process.exit(0);
     }
 
     // Update FXEngine
-    console.log("🔄 Updating PayerX FXEngine...");
+    console.log("🔄 Updating WizPay FXEngine...");
     console.log("   From:", currentFXEngine);
     console.log("   To:", NEW_FXENGINE_ADDRESS);
     console.log();
 
-    const tx = await payerx.updateFXEngine(NEW_FXENGINE_ADDRESS);
+    const tx = await wizpay.updateFXEngine(NEW_FXENGINE_ADDRESS);
     console.log("⏳ Transaction submitted:", tx.hash);
     
     const receipt = await tx.wait();
@@ -66,7 +66,7 @@ async function main() {
     console.log();
 
     // Verify the update
-    const newFXEngine = await payerx.fxEngine();
+    const newFXEngine = await wizpay.fxEngine();
     console.log("🔍 Verification:");
     console.log("   New FXEngine:", newFXEngine);
     console.log("   Expected:", NEW_FXENGINE_ADDRESS);
@@ -76,7 +76,7 @@ async function main() {
         console.log("✅ Migration successful!");
         console.log();
         console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        console.log("📊 PayerX is now using REAL market rates via StableFXAdapter");
+        console.log("📊 WizPay is now using REAL market rates via StableFXAdapter");
         console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         console.log();
         console.log("🎯 Key Changes:");
@@ -93,7 +93,7 @@ async function main() {
         console.log("   - New (Real): 1 EURC = 1.09 USDC (market rate)");
         console.log();
         console.log("3. Monitor transactions on ArcScan:");
-        console.log(`   https://testnet.arcscan.app/address/${PAYERX_ADDRESS}`);
+        console.log(`   https://testnet.arcscan.app/address/${WIZPAY_ADDRESS}`);
         console.log();
         console.log("ℹ️  The old MockFXEngine is still deployed but no longer used.");
         console.log("   You can decommission it or keep it for testing purposes.");

@@ -18,14 +18,14 @@ async function main() {
     console.log();
 
     // Get addresses from .env
-    const PAYERX_ADDRESS = process.env.PAYERX_ADDRESS;
+    const WIZPAY_ADDRESS = process.env.WIZPAY_ADDRESS;
     const ADAPTER_ADDRESS = process.env.STABLEFX_ADAPTER_ADDRESS;
     const EURC = process.env.ARC_EURC;
     const USDC = process.env.ARC_USDC;
     const USER_WALLET = "0x75b0b8EFb946e2892Bc650311D28DEFfbe015Ea9";
 
     console.log("📍 Contract Addresses:");
-    console.log("   PayerX:", PAYERX_ADDRESS);
+    console.log("   WizPay:", WIZPAY_ADDRESS);
     console.log("   Adapter:", ADAPTER_ADDRESS);
     console.log("   EURC:", EURC);
     console.log("   USDC:", USDC);
@@ -41,7 +41,7 @@ async function main() {
         "function getExchangeRate(address tokenIn, address tokenOut) external view returns (uint256)"
     ];
 
-    const payerxABI = [
+    const wizpayABI = [
         "function routeAndPay(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut, address recipient) external",
         "function fxEngine() external view returns (address)"
     ];
@@ -54,7 +54,7 @@ async function main() {
     ];
 
     const adapter = new hre.ethers.Contract(ADAPTER_ADDRESS, adapterABI, deployer);
-    const payerx = new hre.ethers.Contract(PAYERX_ADDRESS, payerxABI, deployer);
+    const wizpay = new hre.ethers.Contract(WIZPAY_ADDRESS, wizpayABI, deployer);
     const eurc = new hre.ethers.Contract(EURC, erc20ABI, deployer);
     const usdc = new hre.ethers.Contract(USDC, erc20ABI, deployer);
 
@@ -161,11 +161,11 @@ async function main() {
         console.log("   USDC:", hre.ethers.formatUnits(userUSDC, 18));
         console.log();
 
-        // Approve PayerX
+        // Approve WizPay
         const paymentAmount = hre.ethers.parseUnits("1", 6); // 1 EURC
-        console.log("Approving PayerX to spend EURC...");
+        console.log("Approving WizPay to spend EURC...");
         const userEurc = eurc.connect(userSigner);
-        const approveTx = await userEurc.approve(PAYERX_ADDRESS, paymentAmount);
+        const approveTx = await userEurc.approve(WIZPAY_ADDRESS, paymentAmount);
         const approveReceipt = await approveTx.wait();
         console.log("✅ Approved at block", approveReceipt.blockNumber);
         console.log("   Tx:", approveTx.hash);
@@ -174,9 +174,9 @@ async function main() {
         // Execute payment
         console.log("Executing payment...");
         const minOutput = hre.ethers.parseUnits("1.1", 18); // With slippage
-        const userPayerx = payerx.connect(userSigner);
+        const userWizpay = wizpay.connect(userSigner);
         
-        const paymentTx = await userPayerx.routeAndPay(
+        const paymentTx = await userWizpay.routeAndPay(
             EURC,
             USDC,
             paymentAmount,

@@ -19,7 +19,7 @@ No, this project is **not yet fully aligned** with the ARC documentation referen
 The most accurate conclusion is:
 
 - **Sufficiently aligned at the ARC network/infrastructure level**: chain, RPC, explorer, primary tokens, and the assumption of USDC as gas are all correct.
-- **Not fully aligned at the official ARC/Circle flow level**: the application's core runtime still uses a custom architecture — Privy smart wallets + WizPay/PayerX contracts + custom StableFXAdapter_V2.
+- **Not fully aligned at the official ARC/Circle flow level**: the application's core runtime still uses a custom architecture — Privy smart wallets + WizPay/WizPay contracts + custom StableFXAdapter_V2.
 - **Official Circle StableFX integration is only halfway complete**: the client and API routes already exist, but the main UI submission path still does not execute the Permit2 -> typedData signing -> FxEscrow settlement flow as documented.
 
 Therefore, this project is more accurately described as:
@@ -105,7 +105,7 @@ This repo is not built around Circle Developer-Controlled Wallets. Instead, it u
 
 - Privy auth and smart wallets on the frontend
 - Transactions executed by the user through their own smart wallet
-- Payments processed through the `WizPay`/`PayerX` contract
+- Payments processed through the `WizPay`/`WizPay` contract
 - Cross-stablecoin swaps performed through a custom engine `StableFXAdapter_V2` or planned Circle StableFX
 
 Additionally, dependencies identical to the official Circle Wallets tutorial are not present in the main project packages. The frontend uses Privy, wagmi, viem, and permissionless — not the Circle Developer-Controlled Wallets SDK.
@@ -117,7 +117,7 @@ Primary evidence:
 - `frontend/app/providers.tsx`
 - `frontend/hooks/wizpay/useBatchPayroll.ts`
 - `contracts/WizPay.sol`
-- `contracts/PayerX.sol`
+- `contracts/WizPay.sol`
 
 ### Verdict for Transfer Tutorial
 

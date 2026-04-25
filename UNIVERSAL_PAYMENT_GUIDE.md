@@ -1,4 +1,4 @@
-# PayerX Universal Payment System
+# WizPay Universal Payment System
 
 **Send ANY amount of ANY token to ANY token - Fully Flexible, No Hardcoding**
 
@@ -54,11 +54,11 @@ When `FROM_TOKEN` = `TO_TOKEN`, the script uses **direct token transfer**:
 - EURC → EURC: Perfect for sending payments in EURC
 
 ### Different Tokens (Swap via Adapter)
-When `FROM_TOKEN` ≠ `TO_TOKEN`, the script uses **PayerX + StableFXAdapter**:
+When `FROM_TOKEN` ≠ `TO_TOKEN`, the script uses **WizPay + StableFXAdapter**:
 1. Fetches real EUR/USD rate from official API
 2. Updates rate on adapter
-3. Approves tokens to PayerX
-4. PayerX routes swap through adapter
+3. Approves tokens to WizPay
+4. WizPay routes swap through adapter
 5. Recipient receives swapped tokens
 
 **Examples:**
@@ -78,7 +78,7 @@ When `FROM_TOKEN` ≠ `TO_TOKEN`, the script uses **PayerX + StableFXAdapter**:
 ┌─────────────────────────────────────────────────────────┐
 │ Cross-Token Swap (EURC↔USDC)                           │
 │                                                         │
-│  User → PayerX → Adapter (swap at real rate) → Recipient│
+│  User → WizPay → Adapter (swap at real rate) → Recipient│
 │  ✅ Real market data, non-custodial                     │
 │  ⚠️ Adapter liquidity constraint (~0.01 per tx testnet) │
 └─────────────────────────────────────────────────────────┘
@@ -190,7 +190,7 @@ Recent successful transactions:
 
 - `scripts/universal-payment.js` - Universal payment script (all token pairs)
 - `scripts/payment.js` - Simple EURC→USDC script
-- `contracts/PayerX.sol` - Non-custodial router
+- `contracts/WizPay.sol` - Non-custodial router
 - `hardhat.config.js` - Network config
 
 ## Comparison

@@ -6,7 +6,7 @@ import hre from "hardhat";
  */
 async function main() {
     console.log("╔════════════════════════════════════════════════════════════════╗");
-    console.log("║  🏢 PayerX Enterprise Batch Test - ARC Testnet               ║");
+    console.log("║  🏢 WizPay Enterprise Batch Test - ARC Testnet               ║");
     console.log("║  Reference ID: ARC-PAYROLL-001 | EURC → USDC                 ║");
     console.log("╚════════════════════════════════════════════════════════════════╝\n");
 
@@ -22,17 +22,17 @@ async function main() {
     ];
     const eurc = new hre.ethers.Contract(EURC, IERC20_ABI, deployer);
 
-    // ── Step 1: Deploy PayerX v3 Enterprise ───────────────────────
-    console.log("📦 Step 1: Deploying PayerX v3 (Enterprise Grade)...");
-    const PayerX = await hre.ethers.getContractFactory("PayerX");
-    const payerx = await PayerX.deploy(ADAPTER, deployer.address, 10);
-    await payerx.waitForDeployment();
-    const payerxAddr = await payerx.getAddress();
-    console.log("   ✅ PayerX v3 deployed to:", payerxAddr);
+    // ── Step 1: Deploy WizPay v3 Enterprise ───────────────────────
+    console.log("📦 Step 1: Deploying WizPay v3 (Enterprise Grade)...");
+    const WizPay = await hre.ethers.getContractFactory("WizPay");
+    const wizpay = await WizPay.deploy(ADAPTER, deployer.address, 10);
+    await wizpay.waitForDeployment();
+    const wizpayAddr = await wizpay.getAddress();
+    console.log("   ✅ WizPay v3 deployed to:", wizpayAddr);
 
     // Whitelist tokens
-    await payerx.batchSetTokenWhitelist([USDC, EURC, USYC], true).then(t => t.wait());
-    await payerx.setWhitelistEnabled(true).then(t => t.wait());
+    await wizpay.batchSetTokenWhitelist([USDC, EURC, USYC], true).then(t => t.wait());
+    await wizpay.setWhitelistEnabled(true).then(t => t.wait());
     console.log("   ✅ Tokens whitelisted\n");
 
     // ── Step 2: Refresh exchange rates ────────────────────────────
@@ -77,14 +77,14 @@ async function main() {
 
     // ── Step 4: Approve ───────────────────────────────────────────
     console.log("🔐 Step 4: Approving EURC...");
-    await eurc.approve(payerxAddr, totalInput).then(t => t.wait());
+    await eurc.approve(wizpayAddr, totalInput).then(t => t.wait());
     console.log("   ✅ Approved\n");
 
     // ── Step 5: Execute Enterprise Batch ──────────────────────────
     console.log("🚀 Step 5: Executing batchRouteAndPay with memo...");
     const startTime = Date.now();
 
-    const batchTx = await payerx.batchRouteAndPay(
+    const batchTx = await wizpay.batchRouteAndPay(
         EURC, USDC, recipients, amountsIn, minAmountsOut, REFERENCE_ID
     );
     console.log("   Tx submitted:", batchTx.hash);
@@ -107,7 +107,7 @@ async function main() {
     let count = 0;
     for (const log of receipt.logs) {
         try {
-            const parsed = payerx.interface.parseLog(log);
+            const parsed = wizpay.interface.parseLog(log);
             if (parsed && parsed.name === "PaymentRouted") {
                 count++;
                 console.log(`      #${count}: ${parsed.args[1].slice(0,10)}... | ${hre.ethers.formatUnits(parsed.args[4], 6)} EURC → ${hre.ethers.formatUnits(parsed.args[5], 6)} USDC`);
@@ -133,8 +133,8 @@ async function main() {
     console.log("   🔗 Verify on ArcScan:");
     console.log("      https://testnet.arcscan.app/tx/" + batchTx.hash);
     console.log();
-    console.log("   📋 Update .env with new PayerX v3 address:");
-    console.log("      PAYERX_ADDRESS=" + payerxAddr);
+    console.log("   📋 Update .env with new WizPay v3 address:");
+    console.log("      WIZPAY_ADDRESS=" + wizpayAddr);
 }
 
 main()

@@ -1,7 +1,7 @@
-# Architecture Analysis and Workflow: WizPay (PayerX)
+# Architecture Analysis and Workflow: WizPay (WizPay)
 
 ## 📌 Project Overview
-WizPay (formerly known as PayerX) is a non-custodial Web3 *smart payment router* infrastructure operating on the ARC Layer-1 blockchain (powered by Circle). The application is specifically designed to handle automated multi-token *payroll* payments across currencies (e.g., a company pays salaries in EURC, but employees choose to receive in USDC) within a single *atomic* transaction.
+WizPay (formerly known as WizPay) is a non-custodial Web3 *smart payment router* infrastructure operating on the ARC Layer-1 blockchain (powered by Circle). The application is specifically designed to handle automated multi-token *payroll* payments across currencies (e.g., a company pays salaries in EURC, but employees choose to receive in USDC) within a single *atomic* transaction.
 
 The project focuses on cost efficiency (extremely low *gas fees*) by integrating native **Circle StableFX** for fair exchange rates that closely track *real-time market rates*.
 

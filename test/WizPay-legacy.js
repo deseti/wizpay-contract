@@ -2,8 +2,8 @@ import { expect } from "chai";
 import hre from "hardhat";
 const { ethers } = hre;
 
-describe("PayerX Smart Payment Router", function () {
-  let payerX;
+describe("WizPay Smart Payment Router", function () {
+  let wizPay;
   let fxEngine;
   let mockEURC;
   let mockUSDC;
@@ -52,10 +52,10 @@ describe("PayerX Smart Payment Router", function () {
     await mockUSDC.transfer(await fxEngine.getAddress(), ethers.parseUnits("500000", 6));
     await mockEURC.transfer(await fxEngine.getAddress(), ethers.parseUnits("500000", 6));
 
-    // Deploy PayerX
-    const PayerX = await ethers.getContractFactory("PayerX");
-    payerX = await PayerX.deploy(await fxEngine.getAddress(), feeCollector.address, FEE_BPS);
-    await payerX.waitForDeployment();
+    // Deploy WizPay
+    const WizPay = await ethers.getContractFactory("WizPay");
+    wizPay = await WizPay.deploy(await fxEngine.getAddress(), feeCollector.address, FEE_BPS);
+    await wizPay.waitForDeployment();
 
     // Fund sender with EURC
     await mockEURC.transfer(sender.address, ethers.parseUnits("10000", 6));
@@ -63,25 +63,25 @@ describe("PayerX Smart Payment Router", function () {
 
   describe("Deployment", function () {
     it("Should set the correct FX Engine address", async function () {
-      expect(await payerX.fxEngine()).to.equal(await fxEngine.getAddress());
+      expect(await wizPay.fxEngine()).to.equal(await fxEngine.getAddress());
     });
 
     it("Should set the correct owner", async function () {
-      expect(await payerX.owner()).to.equal(owner.address);
+      expect(await wizPay.owner()).to.equal(owner.address);
     });
 
     it("Should revert if FX Engine address is zero", async function () {
-      const PayerX = await ethers.getContractFactory("PayerX");
+      const WizPay = await ethers.getContractFactory("WizPay");
       await expect(
-        PayerX.deploy(ethers.ZeroAddress, feeCollector.address, FEE_BPS)
-      ).to.be.revertedWith("PayerX: FX Engine cannot be zero address");
+        WizPay.deploy(ethers.ZeroAddress, feeCollector.address, FEE_BPS)
+      ).to.be.revertedWith("WizPay: FX Engine cannot be zero address");
     });
 
     it("Should revert if fee exceeds maximum", async function () {
-      const PayerX = await ethers.getContractFactory("PayerX");
+      const WizPay = await ethers.getContractFactory("WizPay");
       await expect(
-        PayerX.deploy(await fxEngine.getAddress(), feeCollector.address, 150) // 1.5% > max
-      ).to.be.revertedWith("PayerX: Fee exceeds maximum");
+        WizPay.deploy(await fxEngine.getAddress(), feeCollector.address, 150) // 1.5% > max
+      ).to.be.revertedWith("WizPay: Fee exceeds maximum");
     });
   });
 
@@ -94,23 +94,23 @@ describe("PayerX Smart Payment Router", function () {
       // Get initial balances
       const senderEURCBefore = await mockEURC.balanceOf(sender.address);
       const recipientUSDCBefore = await mockUSDC.balanceOf(recipient.address);
-      const payerXEURCBefore = await mockEURC.balanceOf(await payerX.getAddress());
+      const wizPayEURCBefore = await mockEURC.balanceOf(await wizPay.getAddress());
 
-      // Step 1: Sender approves PayerX to spend EURC
+      // Step 1: Sender approves WizPay to spend EURC
       await mockEURC.connect(sender).approve(
-        await payerX.getAddress(),
+        await wizPay.getAddress(),
         PAYMENT_AMOUNT
       );
 
       // Verify approval
       const allowance = await mockEURC.allowance(
         sender.address,
-        await payerX.getAddress()
+        await wizPay.getAddress()
       );
       expect(allowance).to.equal(PAYMENT_AMOUNT);
 
       // Step 2: Execute routeAndPay
-      const tx = await payerX.connect(sender).routeAndPay(
+      const tx = await wizPay.connect(sender).routeAndPay(
         await mockEURC.getAddress(),
         await mockUSDC.getAddress(),
         PAYMENT_AMOUNT,
@@ -124,7 +124,7 @@ describe("PayerX Smart Payment Router", function () {
       const expectedOutputAfterFee = (EXPECTED_OUTPUT * amountAfterFee) / PAYMENT_AMOUNT;
       
       await expect(tx)
-        .to.emit(payerX, "PaymentRouted")
+        .to.emit(wizPay, "PaymentRouted")
         .withArgs(
           sender.address,
           recipient.address,
@@ -138,7 +138,7 @@ describe("PayerX Smart Payment Router", function () {
       // Step 3: Verify final balances
       const senderEURCAfter = await mockEURC.balanceOf(sender.address);
       const recipientUSDCAfter = await mockUSDC.balanceOf(recipient.address);
-      const payerXEURCAfter = await mockEURC.balanceOf(await payerX.getAddress());
+      const wizPayEURCAfter = await mockEURC.balanceOf(await wizPay.getAddress());
       const feeCollectorBalance = await mockEURC.balanceOf(feeCollector.address);
 
       // Sender should have less EURC
@@ -150,8 +150,8 @@ describe("PayerX Smart Payment Router", function () {
       // Fee collector should have received fee
       expect(feeCollectorBalance).to.equal(feeAmount);
 
-      // PayerX contract should have no leftover EURC (non-custodial)
-      expect(payerXEURCAfter).to.equal(payerXEURCBefore);
+      // WizPay contract should have no leftover EURC (non-custodial)
+      expect(wizPayEURCAfter).to.equal(wizPayEURCBefore);
     });
 
     it("Should work for reverse swap (USDC to EURC)", async function () {
@@ -164,11 +164,11 @@ describe("PayerX Smart Payment Router", function () {
 
       // Approve and execute
       await mockUSDC.connect(sender).approve(
-        await payerX.getAddress(),
+        await wizPay.getAddress(),
         paymentAmount
       );
 
-      await payerX.connect(sender).routeAndPay(
+      await wizPay.connect(sender).routeAndPay(
         await mockUSDC.getAddress(),
         await mockEURC.getAddress(),
         paymentAmount,
@@ -188,15 +188,15 @@ describe("PayerX Smart Payment Router", function () {
     const UNREALISTIC_MIN = ethers.parseUnits("2000", 6); // Demand 2000 USDC (impossible)
 
     it("Should revert if minAmountOut is not met", async function () {
-      // Approve PayerX
+      // Approve WizPay
       await mockEURC.connect(sender).approve(
-        await payerX.getAddress(),
+        await wizPay.getAddress(),
         PAYMENT_AMOUNT
       );
 
       // Try to execute with unrealistic slippage protection
       await expect(
-        payerX.connect(sender).routeAndPay(
+        wizPay.connect(sender).routeAndPay(
           await mockEURC.getAddress(),
           await mockUSDC.getAddress(),
           PAYMENT_AMOUNT,
@@ -212,15 +212,15 @@ describe("PayerX Smart Payment Router", function () {
 
       const minAmountOut = ethers.parseUnits("1000", 6); // Reasonable expectation
 
-      // Approve PayerX
+      // Approve WizPay
       await mockEURC.connect(sender).approve(
-        await payerX.getAddress(),
+        await wizPay.getAddress(),
         PAYMENT_AMOUNT
       );
 
       // Should fail because FX Engine will return only half the expected amount
       await expect(
-        payerX.connect(sender).routeAndPay(
+        wizPay.connect(sender).routeAndPay(
           await mockEURC.getAddress(),
           await mockUSDC.getAddress(),
           PAYMENT_AMOUNT,
@@ -237,11 +237,11 @@ describe("PayerX Smart Payment Router", function () {
       const minAmountOut = ethers.parseUnits("1050", 6); // 5% tolerance
 
       await mockEURC.connect(sender).approve(
-        await payerX.getAddress(),
+        await wizPay.getAddress(),
         PAYMENT_AMOUNT
       );
 
-      const tx = await payerX.connect(sender).routeAndPay(
+      const tx = await wizPay.connect(sender).routeAndPay(
         await mockEURC.getAddress(),
         await mockUSDC.getAddress(),
         PAYMENT_AMOUNT,
@@ -249,7 +249,7 @@ describe("PayerX Smart Payment Router", function () {
         recipient.address
       );
 
-      await expect(tx).to.emit(payerX, "PaymentRouted");
+      await expect(tx).to.emit(wizPay, "PaymentRouted");
     });
   });
 
@@ -259,67 +259,67 @@ describe("PayerX Smart Payment Router", function () {
 
     it("Should revert if tokenIn is zero address", async function () {
       await expect(
-        payerX.connect(sender).routeAndPay(
+        wizPay.connect(sender).routeAndPay(
           ethers.ZeroAddress,
           await mockUSDC.getAddress(),
           PAYMENT_AMOUNT,
           MIN_AMOUNT_OUT,
           recipient.address
         )
-      ).to.be.revertedWith("PayerX: tokenIn cannot be zero address");
+      ).to.be.revertedWith("WizPay: tokenIn cannot be zero address");
     });
 
     it("Should revert if tokenOut is zero address", async function () {
       await expect(
-        payerX.connect(sender).routeAndPay(
+        wizPay.connect(sender).routeAndPay(
           await mockEURC.getAddress(),
           ethers.ZeroAddress,
           PAYMENT_AMOUNT,
           MIN_AMOUNT_OUT,
           recipient.address
         )
-      ).to.be.revertedWith("PayerX: tokenOut cannot be zero address");
+      ).to.be.revertedWith("WizPay: tokenOut cannot be zero address");
     });
 
     it("Should revert if amountIn is zero", async function () {
       await expect(
-        payerX.connect(sender).routeAndPay(
+        wizPay.connect(sender).routeAndPay(
           await mockEURC.getAddress(),
           await mockUSDC.getAddress(),
           0,
           MIN_AMOUNT_OUT,
           recipient.address
         )
-      ).to.be.revertedWith("PayerX: amountIn must be greater than zero");
+      ).to.be.revertedWith("WizPay: amountIn must be greater than zero");
     });
 
     it("Should revert if recipient is zero address", async function () {
       await mockEURC.connect(sender).approve(
-        await payerX.getAddress(),
+        await wizPay.getAddress(),
         PAYMENT_AMOUNT
       );
 
       await expect(
-        payerX.connect(sender).routeAndPay(
+        wizPay.connect(sender).routeAndPay(
           await mockEURC.getAddress(),
           await mockUSDC.getAddress(),
           PAYMENT_AMOUNT,
           MIN_AMOUNT_OUT,
           ethers.ZeroAddress
         )
-      ).to.be.revertedWith("PayerX: recipient cannot be zero address");
+      ).to.be.revertedWith("WizPay: recipient cannot be zero address");
     });
 
     it("Should revert if sender has insufficient balance", async function () {
       const hugeAmount = ethers.parseUnits("1000000", 6);
 
       await mockEURC.connect(sender).approve(
-        await payerX.getAddress(),
+        await wizPay.getAddress(),
         hugeAmount
       );
 
       await expect(
-        payerX.connect(sender).routeAndPay(
+        wizPay.connect(sender).routeAndPay(
           await mockEURC.getAddress(),
           await mockUSDC.getAddress(),
           hugeAmount,
@@ -332,12 +332,12 @@ describe("PayerX Smart Payment Router", function () {
     it("Should revert if approval is insufficient", async function () {
       // Approve only half of what we need
       await mockEURC.connect(sender).approve(
-        await payerX.getAddress(),
+        await wizPay.getAddress(),
         PAYMENT_AMOUNT / 2n
       );
 
       await expect(
-        payerX.connect(sender).routeAndPay(
+        wizPay.connect(sender).routeAndPay(
           await mockEURC.getAddress(),
           await mockUSDC.getAddress(),
           PAYMENT_AMOUNT,
@@ -353,13 +353,13 @@ describe("PayerX Smart Payment Router", function () {
       const newFXEngine = await (await ethers.getContractFactory("MockFXEngine")).deploy();
       await newFXEngine.waitForDeployment();
 
-      const tx = await payerX.updateFXEngine(await newFXEngine.getAddress());
+      const tx = await wizPay.updateFXEngine(await newFXEngine.getAddress());
 
       await expect(tx)
-        .to.emit(payerX, "FXEngineUpdated")
+        .to.emit(wizPay, "FXEngineUpdated")
         .withArgs(await fxEngine.getAddress(), await newFXEngine.getAddress());
 
-      expect(await payerX.fxEngine()).to.equal(await newFXEngine.getAddress());
+      expect(await wizPay.fxEngine()).to.equal(await newFXEngine.getAddress());
     });
 
     it("Should prevent non-owner from updating FX Engine", async function () {
@@ -367,14 +367,14 @@ describe("PayerX Smart Payment Router", function () {
       await newFXEngine.waitForDeployment();
 
       await expect(
-        payerX.connect(sender).updateFXEngine(await newFXEngine.getAddress())
-      ).to.be.revertedWithCustomError(payerX, "OwnableUnauthorizedAccount");
+        wizPay.connect(sender).updateFXEngine(await newFXEngine.getAddress())
+      ).to.be.revertedWithCustomError(wizPay, "OwnableUnauthorizedAccount");
     });
 
     it("Should revert if new FX Engine is zero address", async function () {
       await expect(
-        payerX.updateFXEngine(ethers.ZeroAddress)
-      ).to.be.revertedWith("PayerX: FX Engine cannot be zero address");
+        wizPay.updateFXEngine(ethers.ZeroAddress)
+      ).to.be.revertedWith("WizPay: FX Engine cannot be zero address");
     });
   });
 
@@ -383,7 +383,7 @@ describe("PayerX Smart Payment Router", function () {
       const amountIn = ethers.parseUnits("1000", 6);
       const expectedOut = ethers.parseUnits("1100", 6);
 
-      const estimate = await payerX.getEstimatedOutput(
+      const estimate = await wizPay.getEstimatedOutput(
         await mockEURC.getAddress(),
         await mockUSDC.getAddress(),
         amountIn
@@ -396,7 +396,7 @@ describe("PayerX Smart Payment Router", function () {
       const randomToken = await (await ethers.getContractFactory("MockERC20"))
         .deploy("Random", "RND", 6, INITIAL_SUPPLY);
 
-      const estimate = await payerX.getEstimatedOutput(
+      const estimate = await wizPay.getEstimatedOutput(
         await randomToken.getAddress(),
         await mockUSDC.getAddress(),
         ethers.parseUnits("1000", 6)
@@ -412,11 +412,11 @@ describe("PayerX Smart Payment Router", function () {
       const minAmountOut = ethers.parseUnits("1000", 6);
 
       await mockEURC.connect(sender).approve(
-        await payerX.getAddress(),
+        await wizPay.getAddress(),
         paymentAmount
       );
 
-      await payerX.connect(sender).routeAndPay(
+      await wizPay.connect(sender).routeAndPay(
         await mockEURC.getAddress(),
         await mockUSDC.getAddress(),
         paymentAmount,
@@ -424,9 +424,9 @@ describe("PayerX Smart Payment Router", function () {
         recipient.address
       );
 
-      // PayerX should have no EURC or USDC balance
-      expect(await mockEURC.balanceOf(await payerX.getAddress())).to.equal(0);
-      expect(await mockUSDC.balanceOf(await payerX.getAddress())).to.equal(0);
+      // WizPay should have no EURC or USDC balance
+      expect(await mockEURC.balanceOf(await wizPay.getAddress())).to.equal(0);
+      expect(await mockUSDC.balanceOf(await wizPay.getAddress())).to.equal(0);
     });
 
     it("Should handle multiple consecutive payments without accumulating funds", async function () {
@@ -435,11 +435,11 @@ describe("PayerX Smart Payment Router", function () {
 
       for (let i = 0; i < 5; i++) {
         await mockEURC.connect(sender).approve(
-          await payerX.getAddress(),
+          await wizPay.getAddress(),
           paymentAmount
         );
 
-        await payerX.connect(sender).routeAndPay(
+        await wizPay.connect(sender).routeAndPay(
           await mockEURC.getAddress(),
           await mockUSDC.getAddress(),
           paymentAmount,
@@ -448,8 +448,8 @@ describe("PayerX Smart Payment Router", function () {
         );
 
         // Verify no accumulation
-        expect(await mockEURC.balanceOf(await payerX.getAddress())).to.equal(0);
-        expect(await mockUSDC.balanceOf(await payerX.getAddress())).to.equal(0);
+        expect(await mockEURC.balanceOf(await wizPay.getAddress())).to.equal(0);
+        expect(await mockUSDC.balanceOf(await wizPay.getAddress())).to.equal(0);
       }
     });
   });
@@ -463,12 +463,12 @@ describe("PayerX Smart Payment Router", function () {
 
       // Set impossible minAmountOut to force swap failure
       await mockEURC.connect(sender).approve(
-        await payerX.getAddress(),
+        await wizPay.getAddress(),
         paymentAmount
       );
 
       await expect(
-        payerX.connect(sender).routeAndPay(
+        wizPay.connect(sender).routeAndPay(
           await mockEURC.getAddress(),
           await mockUSDC.getAddress(),
           paymentAmount,

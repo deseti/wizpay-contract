@@ -1,4 +1,4 @@
-# 🚀 PayerX Quick Reference
+# 🚀 WizPay Quick Reference
 
 ## 🎯 One-Liner Commands
 
@@ -24,7 +24,7 @@ node scripts/auto-update-rates.js --watch 30
 ## 📍 Contract Addresses (ARC Testnet)
 
 ```javascript
-const PAYERX         = '0x570b3d069b3350C54Ec5E78E8b2c2677ddb38C0C';
+const WIZPAY         = '0x570b3d069b3350C54Ec5E78E8b2c2677ddb38C0C';
 const ADAPTER        = '0x177030FBa1dE345F99C91ccCf4Db615E8016f75D';
 const USDC           = '0x3600000000000000000000000000000000000000';
 const EURC           = '0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a';
@@ -46,8 +46,8 @@ node scripts/auto-update-rates.js --watch 60
 
 ### Start Auto-Updater (Production with PM2)
 ```bash
-pm2 start "node scripts/auto-update-rates.js --watch 60" --name payerx-rates
-pm2 logs payerx-rates
+pm2 start "node scripts/auto-update-rates.js --watch 60" --name wizpay-rates
+pm2 logs wizpay-rates
 pm2 save
 ```
 

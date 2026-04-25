@@ -18,7 +18,7 @@ const ARC_CONTRACTS = {
 };
 
 async function main() {
-  console.log("🧪 Testing PayerX with REAL ARC tokens...\n");
+  console.log("🧪 Testing WizPay with REAL ARC tokens...\n");
 
   // Get deployer account
   const [deployer] = await ethers.getSigners();
@@ -35,15 +35,15 @@ async function main() {
   }
 
   const deploymentInfo = JSON.parse(fs.readFileSync(deploymentPath, 'utf8'));
-  const payerXAddress = deploymentInfo.contracts.PayerX;
+  const wizPayAddress = deploymentInfo.contracts.WizPay;
   const fxEngineAddress = deploymentInfo.contracts.MockFXEngine;
   
-  console.log("🎯 PayerX address:", payerXAddress);
+  console.log("🎯 WizPay address:", wizPayAddress);
   console.log("🎯 FX Engine address:", fxEngineAddress, "\n");
 
   // Get contracts
-  const PayerX = await ethers.getContractFactory("PayerX");
-  const payerX = PayerX.attach(payerXAddress);
+  const WizPay = await ethers.getContractFactory("WizPay");
+  const wizPay = WizPay.attach(wizPayAddress);
   
   const IERC20_ABI = ["function balanceOf(address) view returns (uint256)", "function transfer(address,uint256) returns (bool)", "function approve(address,uint256) returns (bool)"];
   const eurc = await ethers.getContractAt(IERC20_ABI, ARC_CONTRACTS.EURC);
@@ -69,16 +69,16 @@ async function main() {
   console.log("   Amount In: ", ethers.formatUnits(amountIn, 6), "EURC");
   console.log("   Min Out:   ", ethers.formatUnits(minAmountOut, 6), "USDC\n");
 
-  // Step 1: Approve PayerX to spend EURC
-  console.log("✍️  Approving PayerX to spend EURC...");
-  const approveTx = await eurc.approve(payerXAddress, amountIn);
+  // Step 1: Approve WizPay to spend EURC
+  console.log("✍️  Approving WizPay to spend EURC...");
+  const approveTx = await eurc.approve(wizPayAddress, amountIn);
   await approveTx.wait();
   console.log("✅ Approved\n");
 
   // Step 2: Execute payment
   console.log("⚡ Executing routeAndPay...");
   try {
-    const tx = await payerX.routeAndPay(
+    const tx = await wizPay.routeAndPay(
       ARC_CONTRACTS.EURC,
       ARC_CONTRACTS.USDC,
       amountIn,
@@ -94,14 +94,14 @@ async function main() {
     // Parse events
     const event = receipt.logs.find(log => {
       try {
-        return payerX.interface.parseLog(log).name === 'PaymentRouted';
+        return wizPay.interface.parseLog(log).name === 'PaymentRouted';
       } catch (e) {
         return false;
       }
     });
 
     if (event) {
-      const parsed = payerX.interface.parseLog(event);
+      const parsed = wizPay.interface.parseLog(event);
       console.log("📊 Payment details from event:");
       console.log("   Amount In:  ", ethers.formatUnits(parsed.args.amountIn, 6), "EURC");
       console.log("   Amount Out: ", ethers.formatUnits(parsed.args.amountOut, 6), "USDC");
@@ -131,7 +131,7 @@ async function main() {
   console.log("═══════════════════════════════════════════════");
   console.log("🎉 Test Complete!");
   console.log("═══════════════════════════════════════════════");
-  console.log("PayerX works perfectly with REAL ARC tokens! 🚀");
+  console.log("WizPay works perfectly with REAL ARC tokens! 🚀");
   console.log("═══════════════════════════════════════════════\n");
 }
 

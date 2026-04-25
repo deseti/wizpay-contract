@@ -5,14 +5,14 @@ dotenv.config();
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const RPC_URL = process.env.ARC_TESTNET_RPC_URL;
-const PAYERX_ADDRESS = process.env.PAYERX_ADDRESS;
+const WIZPAY_ADDRESS = process.env.WIZPAY_ADDRESS;
 
 // ARC Addresses
 const USDC = '0x3600000000000000000000000000000000000000';
 const EURC = '0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a';
 
-// PayerX Contract ABI
-const PAYERX_ABI = [
+// WizPay Contract ABI
+const WIZPAY_ABI = [
   'function updateExchangeRate(uint256 newRate) external',
   'function getCurrentRate() external view returns (uint256)',
   'function executePayment(address token, uint256 amount, uint256 minOutput, address recipient) external',
@@ -28,23 +28,23 @@ const ERC20_ABI = [
 ];
 
 async function demonstrateManualRateUpdate() {
-  console.log('💱 PayerX Manual Exchange Rate Update System\n');
+  console.log('💱 WizPay Manual Exchange Rate Update System\n');
   console.log('📋 Scenario: Update exchange rate for EURC → USDC conversion\n');
   
   const provider = new ethers.JsonRpcProvider(RPC_URL);
   const signer = new ethers.Wallet(PRIVATE_KEY, provider);
   
   console.log(`Wallet: ${signer.address}`);
-  console.log(`PayerX Contract: ${PAYERX_ADDRESS}\n`);
+  console.log(`WizPay Contract: ${WIZPAY_ADDRESS}\n`);
   
   try {
-    const payerX = new ethers.Contract(PAYERX_ADDRESS, PAYERX_ABI, signer);
+    const wizPay = new ethers.Contract(WIZPAY_ADDRESS, WIZPAY_ABI, signer);
     
     // Step 1: Get current rate
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('Step 1: Get Current Exchange Rate');
     
-    const currentRate = await payerX.getCurrentRate();
+    const currentRate = await wizPay.getCurrentRate();
     const rateInDecimals = ethers.formatUnits(currentRate, 6);
     console.log(`Current stored rate: ${rateInDecimals} (1 EURC = X USDC)\n`);
     
@@ -62,8 +62,8 @@ async function demonstrateManualRateUpdate() {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('Step 3: Verify Owner');
     
-    const owner = await payerX.owner();
-    console.log(`PayerX owner: ${owner}`);
+    const owner = await wizPay.owner();
+    console.log(`WizPay owner: ${owner}`);
     console.log(`Your wallet: ${signer.address}`);
     
     if (owner.toLowerCase() === signer.address.toLowerCase()) {
@@ -71,7 +71,7 @@ async function demonstrateManualRateUpdate() {
     } else {
       console.log('⚠️  You are NOT the owner - cannot update rates\n');
       console.log('💡 To enable this feature:');
-      console.log('   1. Deploy PayerX with your wallet as owner');
+      console.log('   1. Deploy WizPay with your wallet as owner');
       console.log('   2. Or transfer ownership to your wallet\n');
       return;
     }
@@ -106,7 +106,7 @@ async function demonstrateManualRateUpdate() {
    - Add small buffer for safety
 
 3. Update contract:
-   ${`await payerX.updateExchangeRate(newRate)`}
+   ${`await wizPay.updateExchangeRate(newRate)`}
 
 4. Verify update:
    - Check on-chain rate
@@ -159,7 +159,7 @@ async function showRateFeedIntegration() {
 }
 
 console.log('╔════════════════════════════════════════════════════════════════╗');
-console.log('║         PayerX Manual Exchange Rate Management System          ║');
+console.log('║         WizPay Manual Exchange Rate Management System          ║');
 console.log('╚════════════════════════════════════════════════════════════════╝\n');
 
 demonstrateManualRateUpdate().catch(console.error);

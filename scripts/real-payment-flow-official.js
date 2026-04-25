@@ -6,7 +6,7 @@ dotenv.config();
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const RPC_URL = process.env.ARC_TESTNET_RPC_URL;
-const PAYERX_ADDRESS = process.env.PAYERX_ADDRESS;
+const WIZPAY_ADDRESS = process.env.WIZPAY_ADDRESS;
 
 // ARC Addresses
 const EURC = '0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a';
@@ -19,7 +19,7 @@ const ERC20_ABI = [
   'function decimals() external view returns (uint8)'
 ];
 
-const PAYERX_ABI = [
+const WIZPAY_ABI = [
   'function routeAndPay(address tokenIn, address tokenOut, uint256 amountIn, uint256 minAmountOut, address recipient) external returns (uint256)',
   'event PaymentRouted(address indexed sender, address indexed recipient, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, uint256 feeAmount)'
 ];
@@ -138,14 +138,14 @@ async function getRealEURUSDRate() {
 
 async function executeRealPaymentFlow() {
   console.log('╔════════════════════════════════════════════════════════════════╗');
-  console.log('║  PayerX Real Payment Flow with Official Market Rates (Per Docs) ║');
+  console.log('║  WizPay Real Payment Flow with Official Market Rates (Per Docs) ║');
   console.log('╚════════════════════════════════════════════════════════════════╝\n');
   
   const provider = new ethers.JsonRpcProvider(RPC_URL);
   const signer = new ethers.Wallet(PRIVATE_KEY, provider);
   
   console.log(`📍 Wallet: ${signer.address}`);
-  console.log(`📍 PayerX: ${PAYERX_ADDRESS}`);
+  console.log(`📍 WizPay: ${WIZPAY_ADDRESS}`);
   console.log(`📍 EURC: ${EURC}`);
   console.log(`📍 USDC: ${USDC}\n`);
   
@@ -188,24 +188,24 @@ async function executeRealPaymentFlow() {
     
     // Step 3: Approve
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('Step 4: Approve EURC for PayerX');
+    console.log('Step 4: Approve EURC for WizPay');
     console.log('');
     
     const eurcWithSigner = eurcContract.connect(signer);
-    const approveTx = await eurcWithSigner.approve(PAYERX_ADDRESS, paymentAmount);
+    const approveTx = await eurcWithSigner.approve(WIZPAY_ADDRESS, paymentAmount);
     console.log(`Approval tx: ${approveTx.hash}`);
     const approveReceipt = await approveTx.wait();
     console.log(`✅ Approved at block ${approveReceipt.blockNumber}\n`);
     
     // Step 4: Execute payment
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('Step 5: Execute Payment via PayerX');
+    console.log('Step 5: Execute Payment via WizPay');
     console.log('');
     
-    const payerX = new ethers.Contract(PAYERX_ADDRESS, PAYERX_ABI, signer);
+    const wizPay = new ethers.Contract(WIZPAY_ADDRESS, WIZPAY_ABI, signer);
     
     console.log('Calling routeAndPay with real market rate...');
-    const paymentTx = await payerX.routeAndPay(
+    const paymentTx = await wizPay.routeAndPay(
       EURC,
       USDC,
       paymentAmount,
